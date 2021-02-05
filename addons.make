@@ -1,0 +1,3 @@
+ofxTextSuite-master
+ofxVectorGraphics
+ofxXmlSettings
