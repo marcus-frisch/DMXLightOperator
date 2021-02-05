@@ -9,8 +9,7 @@ vector<dmxFixtureclass> fixtures;   //stores all dmxFixture objects
 dmxFixtureclass fixObj;
 
 fixColor colorObj;
-//vector<fixColor> colors;
-vector<vector<fixColor>> colors = {{},{}};
+
 
 
 int ofApp::gX(int x){ //function to generate X coords for element on grid
@@ -39,16 +38,30 @@ void ofApp::colorsPanel(int i){
     int hei = panels[i].hi;
     int multi = wid * hei;
     
-    if (colors[dataIden].size() == 0){
-        for (int i = 0; i < multi; i++){
-            colors.push_back({});
-            colors[dataIden].push_back(colorObj);
-            colors[dataIden][i].iden = i;
-            colors[dataIden][i].r = rand() % 255;
-            colors[dataIden][i].g = rand() % 255;
-            colors[dataIden][i].b = rand() % 255;
-        }
+    
+//    if (colors[dataIden].size() == 0){
+//        for (int i = 0; i < multi; i++){
+//            colors.push_back({});
+//            colors[dataIden].push_back(colorObj);
+//            colors[dataIden][i].iden = i;
+//            colors[dataIden][i].r = rand() % 255;
+//            colors[dataIden][i].g = rand() % 255;
+//            colors[dataIden][i].b = rand() % 255;
+//        }
+//    }
+    
+    if (panels[i].savedColors.size() == 0){
+                for (int u = 0; u < multi; u++){
+                    panels[i].savedColors.push_back(colorObj);
+                    panels[i].savedColors[u].iden = u;
+                    panels[i].savedColors[u].r = rand() % 255;
+                    panels[i].savedColors[u].g = rand() % 255;
+                    panels[i].savedColors[u].b = rand() % 255;
+                    
+                }
     }
+    
+    
     
     ofFill();
     ofSetColor(48, 36, 54);
@@ -60,14 +73,12 @@ void ofApp::colorsPanel(int i){
 
     int getCellByIden = 0;
     
-    cout << "dataIden = " << to_string(dataIden) << endl;
-    cout << "getCellByIden = " << to_string(getCellByIden) << endl;
     
         for (int r = 0; r < hei; r++){      //draw rows
             for (int c = 0; c < wid; c++){  //draw columns
-                if (colors[dataIden][getCellByIden].iden != 0){
-                    if (colors[dataIden][getCellByIden].set != false){
-                        ofSetColor(colors[dataIden][getCellByIden].r, colors[dataIden][getCellByIden].g, colors[dataIden][getCellByIden].b);   //set colour of cell
+                if (panels[i].savedColors[getCellByIden].iden != 0){
+                    if (panels[i].savedColors[getCellByIden].set != false){
+                        ofSetColor(panels[i].savedColors[getCellByIden].r, panels[i].savedColors[getCellByIden].g, panels[i].savedColors[getCellByIden].b);   //set colour of cell
                         ofFill();
                         ofDrawRectRounded(x + (c * defCellSize), y + (r*defCellSize), defCellSize, defCellSize,10);
                         ofSetLineWidth(1);
@@ -81,7 +92,7 @@ void ofApp::colorsPanel(int i){
                         ofDrawTriangle(x+(c*defCellSize), y+(r*defCellSize)+25, x+defCellSize+(c*defCellSize), y+(r*defCellSize)+25, x+(c*defCellSize), y+(r*defCellSize)+40);
                         //ofDrawTriangle(x + (c * defCellSize), y+25 + (r*defCellSize), x+defCellSize, y+25 + (r*defCellSize), x + (c * defCellSize), y+35 + (r*defCellSize));
                         ofSetColor(255, 255, 255);
-                        fixText.drawString(to_string(colors[dataIden][getCellByIden].iden),x+ 10 + (c * defCellSize),y + 17 + (r*defCellSize));
+                        fixText.drawString(to_string(panels[i].savedColors[getCellByIden].iden),x+ 10 + (c * defCellSize),y + 17 + (r*defCellSize));
                         ofNoFill();
                         //ofSetLineWidth(2);
                         //ofDrawRectangle(x, y, defCellSize, defCellSize);
@@ -93,18 +104,19 @@ void ofApp::colorsPanel(int i){
                         
                         //ofDrawTriangle(x + (c * defCellSize), y+25 + (r*defCellSize), x+defCellSize, y+25 + (r*defCellSize), x + (c * defCellSize), y+35 + (r*defCellSize));
                         //ofSetColor(255, 255, 255);
-                        fixText.drawString(to_string(colors[dataIden][getCellByIden].iden),x+ 10 + (c * defCellSize),y + 17 + (r*defCellSize));
+                        fixText.drawString(to_string(panels[i].savedColors[getCellByIden].iden),x+ 10 + (c * defCellSize),y + 17 + (r*defCellSize));
                         ofNoFill();
                         //ofSetLineWidth(2);
                         //ofDrawRectangle(x, y, defCellSize, defCellSize);
                     }
                     
                     
-                    if (clickLeft(x + (c * defCellSize), y + (r*defCellSize), defCellSize, defCellSize)){
-                        colors[dataIden][getCellByIden].r = rand() % 255;
-                        colors[dataIden][getCellByIden].g = rand() % 255;
-                        colors[dataIden][getCellByIden].b = rand() % 255;
-                        colors[dataIden][getCellByIden].set = true;
+                    if (clickLeft(x + (c * defCellSize), y + (r*defCellSize), defCellSize, defCellSize)){   //if user clicks on a cell. store a random color.
+                        panels[i].savedColors[getCellByIden].r = rand() % 255;
+                        panels[i].savedColors[getCellByIden].g = rand() % 255;
+                        panels[i].savedColors[getCellByIden].b = rand() % 255;
+                        panels[i].savedColors[getCellByIden].set = true;
+                
                     }
                     
                     getCellByIden++;
@@ -301,6 +313,7 @@ void ofApp::setup(){
     panels[2].hi = 7;
     panels[2].cellSize = 40;
     panels[2].dataIden = 0;
+
     
      
     panels.push_back(panelObj);
@@ -379,7 +392,7 @@ void ofApp::draw(){
     debugText.drawString("Lucent Developer | " + to_string(ofGetMouseX()) + " " + to_string(ofGetMouseY()) + " | F" + to_string(fixtures.size()) + " | W" + to_string(ofGetWindowWidth()) + " H" + to_string(ofGetWindowHeight()) + " | GR" + to_string(int(floor(((ofGetMouseX()-defCellGap)/defCellSize)))) + " " + to_string(int(floor(((ofGetMouseY()-defCellGap)/defCellSize)))), 20, ofGetWindowHeight() - 20); //Debug text
     
     
-    //cout << to_string(rand() % 255) << endl;
+    
     
    
     mouseExe = 0;   //allows user to click on something, drag mouse away and stop execution of that function from occuring. (Like accidently clicking something)

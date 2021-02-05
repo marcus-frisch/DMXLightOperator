@@ -58,31 +58,6 @@ class ofApp : public ofBaseApp{
 
 
 
-
-class panelClass{   //fixture simulator panel.
-public:
-    int x;        // panel X location
-    int y;        // panel Y location
-    int wi;       // panel width
-    int hi;       // panel height
-    int r = 5;    // panel corner radius
-    int cellSize; // default w and h for fixtures
-    int defSpace; // default seperating space size between cells
-    string type;  // panel type identifier     e.g "fixsimulation", "controlpanel"
-    string name;  // panel title e.g "simulation"
-    int dataIden; // (data_Identification) as its possible to have multiple panels of the same type, we ultimately want them to store their own data. to do this we add a new object to what ever that panel(types) vector is and store which parameter
-    
-    //lookup oop instantiation / constructor - method that runs when you make a new object
-    
-//    int getName(){
-//        if name ia not null:
-//        retrurn name;
-//    }
-//    }
- 
-
-};
-
 class dmxFixtureclass{   //dmx fixture
 public:
     string name = "fixture";
@@ -112,7 +87,31 @@ public:
     int w;  //white
 };
 
+class panelClass{   //fixture simulator panel.
+public:
+    int x;        // panel X location
+    int y;        // panel Y location
+    int wi;       // panel width
+    int hi;       // panel height
+    int r = 5;    // panel corner radius
+    int cellSize; // default w and h for fixtures
+    int defSpace; // default seperating space size between cells
+    string type;  // panel type identifier     e.g "fixsimulation", "controlpanel"
+    string name;  // panel title e.g "simulation"
+    int dataIden; // (data_Identification) as its possible to have multiple panels of the same type, we ultimately want them to store their own data. to do this we add a new object to what ever that panel(types) vector is and store which parameter
+    
+    vector<fixColor> savedColors = {};
+    
+    //lookup oop instantiation / constructor - method that runs when you make a new object
+    
+//    int getName(){
+//        if name ia not null:
+//        retrurn name;
+//    }
+//    }
+ 
 
+};
 
 
 

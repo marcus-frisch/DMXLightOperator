@@ -16,10 +16,20 @@ int main( ){
 /*
  To do:
  
- *Fix background guide grid (important) - right now it only works properly at a window size of 1920, 1035 and a cell size of 70 with 15 gap.
+ * fix background guide grid (important) - right now it only works properly at a window size of 1920, 1035 and a cell size of 70 with 15 gap.
  
- *show simulated fixtures automatically. - remember not all fixtures have the same channel count.
+ * show simulated fixtures automatically. - remember not all fixtures have the same channel count.
  
  * make text centered in fixtures and cells
  
  */
+
+
+/*
+Possible bugs:
+ 
+ * generating a panel (eg lights) and then resizing it.
+ 
+ 
+ 
+*/
