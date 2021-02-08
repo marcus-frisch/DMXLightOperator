@@ -13,6 +13,14 @@ class ofApp : public ofBaseApp{
 
     void uipanel(int i);
     
+    
+    //mouse variables
+    int red = 255;
+    int green = 255;
+    int blue = 255;
+    string mode = "stor";
+
+    
     void simulatedFixture(int fixAddress);
     bool clickLeft(int x, int y, int w, int h);
     void addFixButton();
