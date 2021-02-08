@@ -20,7 +20,50 @@ int ofApp::gY(int Y){ //function to generate Y coords for element on grid
     return (Y * defCellSize)+defCellGap;
 }
 
-
+void ofApp::rgbMixer(int i){
+    int x = gX(panels[i].x);
+    int y = gY(panels[i].y);
+    int wi = panels[i].wi*defCellSize;
+    int hi = panels[i].hi*defCellSize;
+    int r = panels[i].r;
+    int cellSize = panels[i].cellSize;
+    int defSpace = panels[i].defSpace;
+    string type = panels[i].type;
+    string name = panels[i].name;
+    int cellC = panels[i].x * panels[i].y;   //number of cells panel can fit (or resolution of cells)
+    int wid = panels[i].wi;
+    int hei = panels[i].hi;
+    int multi = wid * hei;
+    ofFill();
+    ofSetColor(77, 90, 77);
+    ofDrawRectRounded(x, y, wi, hi,r);
+    ofSetColor(255, 255, 255);
+    panelName.drawString(name, x+15, y+15);
+    
+    if (wid < 3 || hei < 5){    //check if panel is too small
+        fixText.drawString("Panel\ntoo small", x+80, y+(hi/2)-15);
+        cout << "too small" << endl;
+    } else {
+        
+        ofNoFill();
+        ofSetLineWidth(2);
+        ofSetColor(255, 0, 0);
+        ofDrawRectRounded(x + defSpace, y + cellSize/2, cellSize - (defSpace * 2), hi-cellSize,r);
+        
+        ofNoFill();
+        ofSetLineWidth(2);
+        ofSetColor(0, 255, 0);
+        ofDrawRectRounded(x + defSpace + cellSize, y + cellSize/2, cellSize - (defSpace * 2), hi-cellSize,r);
+        
+        ofNoFill();
+        ofSetLineWidth(2);
+        ofSetColor(0, 0, 255);
+        ofDrawRectRounded(x + defSpace + (cellSize * 2), y + cellSize/2, cellSize - (defSpace * 2), hi-cellSize,r);
+        
+    }
+    ofFill();
+    
+}
 
 void ofApp::colorsPanel(int i){
     int x = gX(panels[i].x);
@@ -33,22 +76,11 @@ void ofApp::colorsPanel(int i){
     string type = panels[i].type;
     string name = panels[i].name;
     int cellC = panels[i].x * panels[i].y;   //number of cells panel can fit (or resolution of cells)
-    int dataIden = panels[i].dataIden;
     int wid = panels[i].wi;
     int hei = panels[i].hi;
     int multi = wid * hei;
     
     
-//    if (colors[dataIden].size() == 0){
-//        for (int i = 0; i < multi; i++){
-//            colors.push_back({});
-//            colors[dataIden].push_back(colorObj);
-//            colors[dataIden][i].iden = i;
-//            colors[dataIden][i].r = rand() % 255;
-//            colors[dataIden][i].g = rand() % 255;
-//            colors[dataIden][i].b = rand() % 255;
-//        }
-//    }
     
     if (panels[i].savedColors.size() == 0){
                 for (int u = 0; u < multi; u++){
@@ -90,24 +122,17 @@ void ofApp::colorsPanel(int i){
                         topGrey.height = 25;
                         ofDrawRectRounded(topGrey,10,10,0,0);   //abstract shape top of cell for label
                         ofDrawTriangle(x+(c*defCellSize), y+(r*defCellSize)+25, x+defCellSize+(c*defCellSize), y+(r*defCellSize)+25, x+(c*defCellSize), y+(r*defCellSize)+40);
-                        //ofDrawTriangle(x + (c * defCellSize), y+25 + (r*defCellSize), x+defCellSize, y+25 + (r*defCellSize), x + (c * defCellSize), y+35 + (r*defCellSize));
                         ofSetColor(255, 255, 255);
                         fixText.drawString(to_string(panels[i].savedColors[getCellByIden].iden),x+ 10 + (c * defCellSize),y + 17 + (r*defCellSize));
                         ofNoFill();
-                        //ofSetLineWidth(2);
-                        //ofDrawRectangle(x, y, defCellSize, defCellSize);
                     } else {
                         ofSetColor(217, 128, 255);   //set colour of cell
                         ofNoFill();
                         ofDrawRectRounded(x + (c * defCellSize), y + (r*defCellSize), defCellSize, defCellSize,10);
                         ofSetLineWidth(1);
-                        
-                        //ofDrawTriangle(x + (c * defCellSize), y+25 + (r*defCellSize), x+defCellSize, y+25 + (r*defCellSize), x + (c * defCellSize), y+35 + (r*defCellSize));
-                        //ofSetColor(255, 255, 255);
                         fixText.drawString(to_string(panels[i].savedColors[getCellByIden].iden),x+ 10 + (c * defCellSize),y + 17 + (r*defCellSize));
                         ofNoFill();
-                        //ofSetLineWidth(2);
-                        //ofDrawRectangle(x, y, defCellSize, defCellSize);
+                        
                     }
                     
                     
@@ -225,17 +250,10 @@ void ofApp::uipanel(int i){ //draw panels ---> i is the panelObj of the panel wi
             ofDrawRectRounded(x, y, wi, hi,r);
             ofSetColor(255, 255, 255);
             panelName.drawString(name, x + 30, y+10);
-    } else if (type=="rgbmixer"){
-        ofFill();
-        ofSetColor(77, 77, 77);
-        ofDrawRectRounded(x, y, wi, hi,r);
-        ofSetColor(255, 255, 255);
-        panelName.drawString(name, x + 30, y+10);
-        
+    } else if (type=="rgbmixer"){   //colour mixer
+        rgbMixer(i);
     } else if (type =="colorstor"){ //draw panels where colour can be stored.
-
         colorsPanel(i);
-
     }
 }
 
@@ -312,20 +330,30 @@ void ofApp::setup(){
     panels[2].wi = 5;
     panels[2].hi = 7;
     panels[2].cellSize = 40;
-    panels[2].dataIden = 0;
+
 
     
      
     panels.push_back(panelObj);
     panels[3].type = "colorstor";
     panels[3].name = "Defined Colors";
-    panels[3].x = 4;
+    panels[3].x = 6;
     panels[3].y = 6;
     panels[3].wi = 4;
     panels[3].hi = 5;
     panels[3].cellSize = 40;
-    panels[3].dataIden = 1;
+
     
+    panels.push_back(panelObj);
+    panels[4].type = "rgbmixer";
+    panels[4].name = "Color mixer";
+    panels[4].x = 1;
+    panels[4].y = 5;
+    panels[4].wi = 3;
+    panels[4].hi = 5;
+    panels[4].cellSize = defCellSize;
+    panels[4].defSpace = 5;
+   
     
     
     fixtures.push_back(fixObj);
@@ -374,6 +402,7 @@ void ofApp::draw(){
     uipanel(1);   //control panel
     uipanel(2);   // color panel
     uipanel(3);   // color panel
+    uipanel(4);   // color mixer
     
 //    simulatedFixture(0);
 //    simulatedFixture(1);

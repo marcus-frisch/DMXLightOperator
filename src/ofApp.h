@@ -20,6 +20,7 @@ class ofApp : public ofBaseApp{
     int gY(int y);  //function to generate Y coords for element on grid
     
     void colorsPanel(int i);
+    void rgbMixer(int i);
     void addFixture(string name, bool simShow, int x, int y, int w, int h, int universe, int address, int channelCount);
     
     
@@ -98,7 +99,7 @@ public:
     int defSpace; // default seperating space size between cells
     string type;  // panel type identifier     e.g "fixsimulation", "controlpanel"
     string name;  // panel title e.g "simulation"
-    int dataIden; // (data_Identification) as its possible to have multiple panels of the same type, we ultimately want them to store their own data. to do this we add a new object to what ever that panel(types) vector is and store which parameter
+//    int dataIden; // (data_Identification) as its possible to have multiple panels of the same type, we ultimately want them to store their own data. to do this we add a new object to what ever that panel(types) vector is and store which parameter
     
     vector<fixColor> savedColors = {};
     
