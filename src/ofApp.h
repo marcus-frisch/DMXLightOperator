@@ -14,10 +14,15 @@ class ofApp : public ofBaseApp{
     void uipanel(int i);
     
     
+
+    
+    
+    
     //mouse variables
     int red = 255;
     int green = 255;
     int blue = 255;
+    int level = 0;  // 0 grid, 1 panel, 2 control panel
     string mode = "stor";
 
     
@@ -30,7 +35,7 @@ class ofApp : public ofBaseApp{
     void colorsPanel(int i);
     void rgbMixer(int i);
     void addFixture(string name, bool simShow, int x, int y, int w, int h, int universe, int address, int channelCount);
-    
+    void controlPanel(int i);
     
 		void keyPressed(int key);
 		void keyReleased(int key);
