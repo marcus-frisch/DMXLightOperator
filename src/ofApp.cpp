@@ -25,6 +25,8 @@ int ofApp::gY(int Y){ //function to generate Y coords for element on grid
 //}
 
 
+
+
 void ofApp::controlPanel(int i){
     int x = gX(panels[i].x);
     int y = gY(panels[i].y);
@@ -42,13 +44,47 @@ void ofApp::controlPanel(int i){
     if (mouseX > x && mouseX < x+wi && mouseY > y && mouseY < y+hi){
         level = 2;
     }
-    ofFill();
-    ofSetColor(77, 77, 77);
-    ofDrawRectRounded(x, y, wi, hi,r);
-    ofSetColor(255, 255, 255);
-    panelName.drawString(name, x + 30, y+10);
     
     
+
+            ofFill();
+            ofSetColor(77, 77, 77);
+            ofDrawRectRounded(x, y, wi, hi,r);
+            ofSetColor(255, 255, 255);
+            panelName.drawString(name, x + 30, y+10);
+
+    
+    //
+    int indexAction = 0;
+    for (int r = 0; r < hei; r++){          //for the amount of rows and columns, display cells with their corresponding action value in cpActions. If it's blank ("") don't do anything
+        for (int c = 0; c < wid; c++){
+            if (indexAction < cpActions.size()){
+                if (cpActions[indexAction] != ""){
+                    ofSetColor(70, 70, 70);
+                    ofFill();
+                    ofDrawRectangle(x+(defCellGap/2) + (defCellSize*c), y+(defCellGap/2) + (defCellSize*r), defCellSize-(defCellGap), defCellSize-(defCellGap));
+                    ofSetColor(255, 255, 255);
+                    fixText.drawString(cpActions[indexAction],x+12 + (defCellSize*c),y+36 + (defCellSize*r));
+                    ofNoFill();
+                    ofSetColor(252, 186, 3);
+                    ofSetLineWidth(2);
+                    ofDrawRectangle(x+(defCellGap/2) + (defCellSize*c), y+(defCellGap/2) + (defCellSize*r), defCellSize-(defCellGap), defCellSize-(defCellGap));
+                    if (clickLeft(x+(defCellGap/2) + (defCellSize*c), y+(defCellGap/2) + (defCellSize*r), defCellSize-(defCellGap), defCellSize-(defCellGap))){
+                        mode = cpActions[indexAction];
+                    }
+                }
+            }
+            indexAction++;
+        }
+    }
+
+    
+    //
+    
+    if (clickLeft(x, y, 30, 30)){
+        cout << "new fixture" << endl;
+        addFixture("cobra", true, 0, 0, 0, 0, 0, 0, 0);
+    }
     
     
 }
@@ -67,6 +103,7 @@ void ofApp::rgbMixer(int i){
     int wid = panels[i].wi;
     int hei = panels[i].hi;
     int multi = wid * hei;
+    //vector<int> fadata = panels[i].fadeData;
     ofFill();
     ofSetColor(77, 90, 77);
     ofDrawRectRounded(x, y, wi, hi,r);
@@ -84,46 +121,49 @@ void ofApp::rgbMixer(int i){
         
     } else {
         
-        ofNoFill();
-        ofSetLineWidth(2);
-        ofSetColor(255, 0, 0);
-        ofDrawRectRounded(x + defSpace, y + (wi/3)-20, (wi/3) - (defSpace * 2), hi-(wi/3),r);
+     
+        for (int f = 0; f < 3; f++){
+            ofNoFill();
+            ofSetLineWidth(2);
+            int c1 = 0;
+            int c2 = 0;
+            int c3 = 0;
+            if (f == 0){
+                c1 = 255;
+            } else if (f == 1){
+                c2 = 255;
+            } else {
+                c3 = 255;
+            }
+            ofSetColor(c1, c2, c3);
+            ofDrawRectRounded(x + defSpace + ((wi/3) * f), y + (wi/3) + ((wi/3)/2), (wi/3) - (defSpace * 2), hi-(wi/3)*2,r);    // outside rectangle
+            ofFill();
+            if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace + (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY >  y + (wi/3) + ((wi/3)/2) && mouseY < y + (wi/3) + ((wi/3)/2) + hi-(wi/3)*2 && mouseExe == 1 && level < 2){   // check if mouse is in position and map values.
+                mouseColors[f] = ofMap(mouseY, y + (wi/3) + ((wi/3)/2) + hi-(wi/3)*2-1, y + (wi/3) + ((wi/3)/2)+1, 0, 255);
+            }
+            ofDrawRectRounded(x + defSpace + 3 + ((wi/3) * f), y + (wi/3) + ((wi/3)/2) + hi-(wi/3)*2 -3, (wi/3) - (defSpace * 2)-6,ofMap(mouseColors[f], 0, 255, 0, ((hi-(wi/3)*2)-6)*-1),r);  //  draw mapped value
+            ofSetColor(255, 255, 255);
+            ofDrawRectRounded(x + defSpace + ((wi/3) * f), y + (wi/3), (wi/3) - (defSpace * 2), (defCellSize/2)-10,r);  // MAX
+            ofSetColor(0, 0, 0);
+            fixText.drawString("MAX", x + defSpace + ((wi/3)/2)-20 + ((wi/3) * f), y + (wi/3)+ 20);
+            if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace +  (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY > y + (wi/3) && mouseY < y + (wi/3) + (defCellSize/2)-10 && mouseExe == 1 && level < 2){
+                mouseColors[f] = 255;
+            }
+            ofSetColor(255, 255, 255);
+            ofDrawRectRounded(x + defSpace + ((wi/3) * f), y + hi - (defCellSize/2) + 4, (wi/3) - (defSpace * 2), (defCellSize/2)-10,r);  // MIN
+            ofSetColor(0, 0, 0);
+            fixText.drawString("MIN", x + defSpace + ((wi/3)/2)-20 + ((wi/3) * f),  y + hi - (defCellSize/2) + 20);
+            if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace +  (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY > y + hi - (defCellSize/2) + 4 && mouseY <  y + hi - (defCellSize/2) + 4 + (defCellSize/2)-10 && mouseExe == 1 && level < 2){
+                mouseColors[f] = 0;
+            }
 
-        ofSetColor(0, 255, 0);
-        ofDrawRectRounded(x + defSpace + (wi/3), y + (wi/3)-20, (wi/3) - (defSpace * 2), hi-(wi/3),r);
+            ofSetColor(255, 255, 255);
+            fixText.drawString(to_string(mouseColors[f]), x + defSpace+(wi/3)-((wi/3)/2)-15 + (wi/3 * f), y+42);   //  Value in text
+            }
 
-        ofSetColor(0, 0, 255);
-        ofDrawRectRounded(x + defSpace + ((wi/3) * 2), y + (wi/3)-20, (wi/3) - (defSpace * 2), hi-(wi/3),r);
-        
-        
-        ofFill();
-        ofSetLineWidth(0);
-        ofSetColor(red, 0, 0);
-        if (mouseX > x + defSpace && mouseX < x + defSpace + ((wi/3) - (defSpace * 2)) && mouseY > y + (wi/3)-20 && mouseY < y + (wi/3)-20 + hi-(wi/3) && mouseExe == 1 && level < 2){   //eee
-           red = ofMap(mouseY, y + (wi/3)-19, y + (wi/3)-20 + (hi-(wi/3)), 255, 0);
-        } else if (mouseX > x + defSpace + (wi/3) && mouseX < x + defSpace + (wi/3) + (wi/3) - (defSpace * 2) && mouseY > y + (wi/3)-20 && mouseY < y + (wi/3)-20 + hi-(wi/3) && mouseExe == 1 && level < 2){
-            green = ofMap(mouseY, y + (wi/3)-19, y + (wi/3)-20 + (hi-(wi/3)), 255, 0);
-        } else if (mouseX > x + defSpace + ((wi/3) * 2) && mouseX < x + defSpace + ((wi/3) * 2) + (wi/3) - (defSpace * 2) &&  mouseY > y + (wi/3)-20 && mouseY < y + (wi/3)-20 + hi-(wi/3) && mouseExe == 1 && level < 2){
-            blue = ofMap(mouseY, y + (wi/3)-19, y + (wi/3)-20 + (hi-(wi/3)), 255, 0);
-        }
-        ofDrawRectRounded(x + defSpace+3, y + hi-23, (wi/3) - (defSpace * 2)-6, ofMap(red, 0, 255, 0, hi-(wi/3)-6)*-1,r);
-
-        ofSetColor(0, green, 0);
-        ofDrawRectRounded(x + defSpace+3 + (wi/3), y + hi-23, (wi/3) - (defSpace * 2)-6, ofMap(green, 0, 255, 0, hi-(wi/3)-6)*-1,r);
-
-        ofSetColor(0, 0, blue);
-        ofDrawRectRounded(x + defSpace+3 + ((wi/3) * 2), y + hi-23, (wi/3) - (defSpace * 2)-6, ofMap(blue, 0, 255, 0, hi-(wi/3)-6)*-1,r);
-        
-        ofSetColor(255, 255, 255);
-        
-        fixText.drawString(to_string(red), x + defSpace+(wi/3)-((wi/3)/2)-15, y+42);
-        fixText.drawString(to_string(green), (x + defSpace+(wi/3)-((wi/3)/2)-15) + (wi/3), y+42);
-        fixText.drawString(to_string(blue), (x + defSpace+(wi/3)-((wi/3)/2)-15) + ((wi/3)*2), y+42);
    
         ofFill();
         ofSetColor(190, 190, 190);
-        //ofDrawRectRounded(x + defSpace+3, y+300, (wi/3) - (defSpace * 2)-6, 25, 5);
-        
         
     }
     ofFill();
@@ -199,13 +239,22 @@ void ofApp::colorsPanel(int i){
                     }
                     
                     
-                    if (clickLeft(x + (c * defCellSize), y + (r*defCellSize), defCellSize, defCellSize) && mode == "stor" && level < 2){   //if user clicks on a cell. store a color from color data mouse has.
-                        mode = "";
-                        panels[i].savedColors[getCellByIden].r = red;
-                        panels[i].savedColors[getCellByIden].g = green;
-                        panels[i].savedColors[getCellByIden].b = blue;
-                        panels[i].savedColors[getCellByIden].set = true;
-                
+                    if (clickLeft(x + (c * defCellSize), y + (r*defCellSize), defCellSize, defCellSize) && level < 2){   //if user clicks on a cell. store a color from color data mouse has.
+                        if (mode == "store"){
+                            mode = "";
+                            panels[i].savedColors[getCellByIden].r = mouseColors[0];
+                            panels[i].savedColors[getCellByIden].g = mouseColors[1];
+                            panels[i].savedColors[getCellByIden].b = mouseColors[2];
+                            panels[i].savedColors[getCellByIden].name = "Color #" + to_string(getCellByIden);
+                            panels[i].savedColors[getCellByIden].set = true;
+                        } else if (mode == "delete") {
+                            mode = "";
+                            panels[i].savedColors[getCellByIden].r = 255;
+                            panels[i].savedColors[getCellByIden].g = 255;
+                            panels[i].savedColors[getCellByIden].b = 255;
+                            panels[i].savedColors[getCellByIden].name = "";
+                            panels[i].savedColors[getCellByIden].set = false;
+                        }
                     }
                     
                     getCellByIden++;
@@ -319,6 +368,9 @@ void ofApp::uipanel(int i){ //draw panels ---> i is the panelObj of the panel wi
         rgbMixer(i);
     } else if (type =="colorstor"){ //draw panels where colour can be stored.
         colorsPanel(i);
+    } else if (type == "brightstor"){
+        cout << "brightness" << endl;
+        
     }
 }
 
@@ -383,8 +435,8 @@ void ofApp::setup(){
     panels[1].name = "Control Panel";
     panels[1].x = 20;
     panels[1].y = 4;
-    panels[1].wi = 5;
-    panels[1].hi = 7;
+    panels[1].wi = 3;
+    panels[1].hi = 5;
     panels[1].cellSize = 40;
     
     panels.push_back(panelObj);
@@ -484,7 +536,7 @@ void ofApp::draw(){
     ofSetColor(255, 255, 255);
     
     
-    debugText.drawString("Lucent Developer | " + to_string(ofGetMouseX()) + " " + to_string(ofGetMouseY()) + " | F" + to_string(fixtures.size()) + " | W" + to_string(ofGetWindowWidth()) + " H" + to_string(ofGetWindowHeight()) + " | GR" + to_string(int(floor(((ofGetMouseX()-defCellGap)/defCellSize)))) + " " + to_string(int(floor(((ofGetMouseY()-defCellGap)/defCellSize)))) + " | m" + to_string(level), 20, ofGetWindowHeight() - 20); //Debug text
+    debugText.drawString("Lucent Developer | " + to_string(ofGetMouseX()) + " " + to_string(ofGetMouseY()) + " | F" + to_string(fixtures.size()) + " | W" + to_string(ofGetWindowWidth()) + " H" + to_string(ofGetWindowHeight()) + " | GR" + to_string(int(floor(((ofGetMouseX()-defCellGap)/defCellSize)))) + " " + to_string(int(floor(((ofGetMouseY()-defCellGap)/defCellSize)))) + " | m" + to_string(level) + " " + mode, 20, ofGetWindowHeight() - 20); //Debug text
     
     
     

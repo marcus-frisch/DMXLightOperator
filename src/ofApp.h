@@ -15,15 +15,16 @@ class ofApp : public ofBaseApp{
     
     
 
-    
+    vector<string> cpActions = {"store", "", "setup", "delete", "rename", "panels", "move", "blackout", "", "", "", "", "", "clear", "off"};
     
     
     //mouse variables
     int red = 255;
     int green = 255;
     int blue = 255;
+    vector<int> mouseColors = {255,255,255,0}; // Color data the mouse is carrying. Red, Green, Blue, White
     int level = 0;  // 0 grid, 1 panel, 2 control panel
-    string mode = "stor";
+    string mode = "";
 
     
     void simulatedFixture(int fixAddress);
@@ -94,11 +95,12 @@ class fixColor{
 public:
     int iden; //cell identifier
     bool set = false; //has user set colour data
-    string name; //name
+    string name = ""; //name
     int r;  //red
     int g;  //green
     int b;  //blue
     int w;  //white
+    
 };
 
 class panelClass{   //fixture simulator panel.
@@ -115,6 +117,7 @@ public:
 //    int dataIden; // (data_Identification) as its possible to have multiple panels of the same type, we ultimately want them to store their own data. to do this we add a new object to what ever that panel(types) vector is and store which parameter
     
     vector<fixColor> savedColors = {};
+    vector<int> fadeData = {100,100,100}; // if a panel has faders and the faders are generated using a FOR loop, data may be stored in here.
     
     //lookup oop instantiation / constructor - method that runs when you make a new object
     
