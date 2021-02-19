@@ -23,6 +23,7 @@ class ofApp : public ofBaseApp{
     int green = 255;
     int blue = 255;
     vector<int> mouseColors = {255,255,255,0}; // Color data the mouse is carrying. Red, Green, Blue, White
+    int mouseBrightness = 0;
     int level = 0;  // 0 grid, 1 panel, 2 control panel
     string mode = "";
 
@@ -35,6 +36,7 @@ class ofApp : public ofBaseApp{
     
     void colorsPanel(int i);
     void rgbMixer(int i);
+    void briMixer(int i);
     void addFixture(string name, bool simShow, int x, int y, int w, int h, int universe, int address, int channelCount);
     void controlPanel(int i);
     

@@ -89,7 +89,84 @@ void ofApp::controlPanel(int i){
     
 }
 
-void ofApp::rgbMixer(int i){
+
+void ofApp::briMixer(int i){  // brightness mixer.
+    int x = gX(panels[i].x);
+    int y = gY(panels[i].y);
+    int wi = panels[i].wi*defCellSize;
+    int hi = panels[i].hi*defCellSize;
+    int r = panels[i].r;
+    int cellSize = panels[i].cellSize;
+    int defSpace = panels[i].defSpace;
+    string type = panels[i].type;
+    string name = panels[i].name;
+    int cellC = panels[i].x * panels[i].y;   //number of cells panel can fit (or resolution of cells)
+    int wid = panels[i].wi;
+    int hei = panels[i].hi;
+    int multi = wid * hei;
+    //vector<int> fadata = panels[i].fadeData;
+    ofFill();
+    ofSetColor(77, 90, 77);
+    ofDrawRectRounded(x, y, wi, hi,r);
+    ofNoFill();
+    ofSetColor(114, 196, 114);
+    ofSetLineWidth(1);
+    ofDrawRectRounded(x, y, wi, hi,r);
+    ofSetColor(255, 255, 255);
+    panelName.drawString(name, x+15, y+15);
+
+
+
+    if (hei < 4){    //check if panel is too small
+        fixText.drawString("Panel\ntoo small", x+80, y+(hi/2)-15);
+
+    } else {
+
+
+        int f = 0;
+            ofNoFill();
+            ofSetLineWidth(2);
+            int c1 = 255;
+            int c2 = 255;
+            int c3 = 255;
+        
+           
+        ofSetColor(c1, c2, c3);
+        ofDrawRectRounded(x + defSpace + (defCellSize * f), y + defCellSize + (defCellSize/2), wi - (defSpace * 2), hi-defCellSize*2,r);    // outside rectangle
+        ofFill();
+        if (mouseX > x + defSpace + (defCellSize * f) && mouseX < x + defSpace + wi - (defSpace * 2) + (defCellSize * f) && mouseY >  y + defCellSize + (defCellSize/2) && mouseY < y + defCellSize + (defCellSize/2) + hi-defCellSize*2 && mouseExe == 1 && level < 2){   // check if mouse is in position and map values.
+            mouseBrightness = ofMap(mouseY, y + defCellSize + (defCellSize/2) + hi-defCellSize*2-1, y + defCellSize + (defCellSize/2)+1, 0, 255);
+        }
+        ofDrawRectRounded(x + defSpace + 3 + (defCellSize * f), y + defCellSize + (defCellSize/2) + hi-defCellSize*2 -3, wi - (defSpace * 2)-6,ofMap(mouseBrightness, 0, 255, 0, ((hi-defCellSize*2)-6)*-1),r);  //  draw mapped value
+        ofSetColor(255, 255, 255);
+        ofDrawRectRounded(x + defSpace + (defCellSize * f), y + defCellSize, wi - (defSpace * 2), (defCellSize/2)-10,r);  // MAX
+        ofSetColor(0, 0, 0);
+        fixText.drawString("MAX", x + defSpace + (wi/2)-20 + (defCellSize * f), y + defCellSize+ 20);
+        if (mouseX > x + defSpace + (defCellSize * f) && mouseX < x + defSpace +  wi - (defSpace * 2) + (defCellSize * f) && mouseY > y + defCellSize && mouseY < y + defCellSize + (defCellSize/2)-10 && mouseExe == 1 && level < 2){
+            mouseBrightness = 255;
+        }
+        ofSetColor(255, 255, 255);
+        ofDrawRectRounded(x + defSpace + (defCellSize * f), y + hi - (defCellSize/2) + 4, wi - (defSpace * 2), (defCellSize/2)-10,r);  // MIN
+        ofSetColor(0, 0, 0);
+        fixText.drawString("MIN", x + defSpace + (wi/2)-20 + (defCellSize * f),  y + hi - (defCellSize/2) + 20);
+        if (mouseX > x + defSpace + (defCellSize * f) && mouseX < x + defSpace +  wi - (defSpace * 2) + (defCellSize * f) && mouseY > y + hi - (defCellSize/2) + 4 && mouseY <  y + hi - (defCellSize/2) + 4 + (defCellSize/2)-10 && mouseExe == 1 && level < 2){
+            mouseBrightness = 0;
+        }
+
+        ofSetColor(255, 255, 255);
+        fixText.drawString(to_string(mouseBrightness), x + (wi/2) - 15, y+42);   //  Value in text
+
+
+        ofFill();
+        ofSetColor(190, 190, 190);
+
+    }
+    ofFill();
+    
+}
+
+
+void ofApp::rgbMixer(int i){       // RGB mixer
     int x = gX(panels[i].x);
     int y = gY(panels[i].y);
     int wi = panels[i].wi*defCellSize;
@@ -116,7 +193,7 @@ void ofApp::rgbMixer(int i){
     
 
     
-    if (wid < 3 || hei < 5){    //check if panel is too small
+    if (wid < 3 || hei < 4){    //check if panel is too small
         fixText.drawString("Panel\ntoo small", x+80, y+(hi/2)-15);
         
     } else {
@@ -366,6 +443,8 @@ void ofApp::uipanel(int i){ //draw panels ---> i is the panelObj of the panel wi
         controlPanel(i);
     } else if (type=="rgbmixer"){   //colour mixer
         rgbMixer(i);
+    } else if (type=="brimixer"){   //brightness mixer
+        briMixer(i);
     } else if (type =="colorstor"){ //draw panels where colour can be stored.
         colorsPanel(i);
     } else if (type == "brightstor"){
@@ -433,8 +512,8 @@ void ofApp::setup(){
     panels.push_back(panelObj);
     panels[1].type = "controlpanel";
     panels[1].name = "Control Panel";
-    panels[1].x = 20;
-    panels[1].y = 4;
+    panels[1].x = 24;
+    panels[1].y = 8;
     panels[1].wi = 3;
     panels[1].hi = 5;
     panels[1].cellSize = 40;
@@ -467,9 +546,19 @@ void ofApp::setup(){
     panels[4].x = 1;
     panels[4].y = 5;
     panels[4].wi = 3;
-    panels[4].hi = 5;
+    panels[4].hi = 4;
     panels[4].cellSize = defCellSize;
     panels[4].defSpace = 5;
+    
+    panels.push_back(panelObj);
+    panels[5].type = "brimixer";
+    panels[5].name = "Bri Mix";
+    panels[5].x = 11;
+    panels[5].y = 5;
+    panels[5].wi = 2;
+    panels[5].hi = 4;
+    panels[5].cellSize = defCellSize;
+    panels[5].defSpace = 5;
    
     
     
@@ -521,6 +610,7 @@ void ofApp::draw(){
     uipanel(2);   // color panel
     uipanel(3);   // color panel
     uipanel(4);   // color mixer
+    uipanel(5);   // color mixer
     
 //    simulatedFixture(0);
 //    simulatedFixture(1);
