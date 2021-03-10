@@ -2,7 +2,33 @@
 
 #include "ofMain.h"
 
+class dmxChannel{   // the dmx channel(s) of each defined fixture
+public:
+    string purpose; // e.g "pan", "tilt", "dimmer", "red", "green", "blue", "white", "amber", "uv"
+    int value;  //e.g 255
+};
 
+class dmxFixtureclass{   //dmx fixture
+public:
+    string name = "fixture";
+    bool simShow = false;
+    int iden;
+    int x;      //simulator x
+    int y;      //simulator y
+    int w;      //simulator width
+    int h;      //simulator height
+    int universe;   //dmx universe
+    int address;    //dmx start channel
+    int channelCount;
+    vector<dmxChannel> channels;
+};
+
+class mouseData{    // stores temporary data (such as data from cells the mouse clicks on
+public:
+    int red = 255;
+    int greeen = 255;
+    int blue = 255;
+};
 
 class ofApp : public ofBaseApp{
 
@@ -11,31 +37,43 @@ class ofApp : public ofBaseApp{
 		void update();
 		void draw();
 
-    void uipanel(int i);
+    void loadIconsFonts();
     
+    // Variables regarding string input
+    int maxCharacterCount;
+    string textValue = "";
     
-
-    vector<string> cpActions = {"store", "", "setup", "delete", "rename", "panels", "move", "blackout", "", "", "", "", "", "clear", "off"};
-    
+    vector<string> cpActions = {"store", "", "setup", "delete", "rename", "panels", "move", "blackout", "channels", "", "", "", "", "clear", "off"};
     
     //mouse variables
     int red = 255;
     int green = 255;
     int blue = 255;
-    vector<int> mouseColors = {255,255,255,0}; // Color data the mouse is carrying. Red, Green, Blue, White
-    int mouseBrightness = 0;
-    int level = 0;  // 0 grid, 1 panel, 2 control panel
+    vector<int> mouseColors = {255,255,255,255,255,255}; // Color data the mouse is carrying. Red, Green, Blue, White, Amber, UV
+    vector<int> mousePosition = {72,72};  // pan tilt values.
+    vector<int> mouseFixtures;  // array stores "iden" (identifiers) of fixtures
+    int mouseBrightness = 52;
+    int level = 0;  // 0 grid, 1 panel, 2 control panel, 3 fieldInput
+    
+    int overlay = 0; // 0 no overlay, 1 fieldInput
+    int fieldInputState = 0; // 0 none/finished input, 1 onScreen input, 3 completed input - ready for change
     string mode = "";
 
     
     void simulatedFixture(int fixAddress);
     bool clickLeft(int x, int y, int w, int h);
+    void strInput(string current, int max);
     void addFixButton();
     int gX(int x);  //function to generate X coords for element on grid
     int gY(int y);  //function to generate Y coords for element on grid
     
+    void uipanel(int i);
     void colorsPanel(int i);
+    void brightnessPanel(int i);
     void rgbMixer(int i);
+    void wauv(int i);   // White, Amber, UV fader mixer
+    void posPanel(int i);
+    void posMixer(int i);
     void briMixer(int i);
     void addFixture(string name, bool simShow, int x, int y, int w, int h, int universe, int address, int channelCount);
     void controlPanel(int i);
@@ -64,9 +102,10 @@ class ofApp : public ofBaseApp{
     ofTrueTypeFont debugText;
     ofTrueTypeFont panelName;
     ofTrueTypeFont fixMain;
+    ofTrueTypeFont pageMain;
     ofTrueTypeFont fixText;
     ofTrueTypeFont panelType;
-    
+    ofTrueTypeFont usrInput;
     ofImage colorsIcon;
     
 
@@ -74,23 +113,6 @@ class ofApp : public ofBaseApp{
 };
 
 
-
-class dmxFixtureclass{   //dmx fixture
-public:
-    string name = "fixture";
-    bool simShow = false;
-    int x;      //simulator x
-    int y;      //simulator y
-    int w;      //simulator width
-    int h;      //simulatir height
-    int universe;   //dmx universe
-    int address;    //dmx start channel
-    int channelCount;
-    vector<int> channelData; //dmx channel data
-    //int channelcount;   //dmx channel count
-    
-    
-};
 
 
 class fixColor{
@@ -105,7 +127,22 @@ public:
     
 };
 
-class panelClass{   //fixture simulator panel.
+class storedBright{
+public:
+    int iden;
+    bool set = false;
+    int value = 255;
+};
+
+class storedPos{
+public:
+    int iden;
+    bool set = false;
+    string name = "#";
+    vector<int> position = {};
+};
+
+class panelClass{
 public:
     int x;        // panel X location
     int y;        // panel Y location
@@ -115,22 +152,9 @@ public:
     int cellSize; // default w and h for fixtures
     int defSpace; // default seperating space size between cells
     string type;  // panel type identifier     e.g "fixsimulation", "controlpanel"
-    string name;  // panel title e.g "simulation"
-//    int dataIden; // (data_Identification) as its possible to have multiple panels of the same type, we ultimately want them to store their own data. to do this we add a new object to what ever that panel(types) vector is and store which parameter
-    
+    string name;  // panel title e.g "simulation"    
+    vector<storedBright> savedBrightness = {};
+    vector<storedPos> savedPositions = {};
     vector<fixColor> savedColors = {};
     vector<int> fadeData = {100,100,100}; // if a panel has faders and the faders are generated using a FOR loop, data may be stored in here.
-    
-    //lookup oop instantiation / constructor - method that runs when you make a new object
-    
-//    int getName(){
-//        if name ia not null:
-//        retrurn name;
-//    }
-//    }
- 
-
 };
-
-
-

@@ -15,7 +15,17 @@ int main( ){
 
 
 /*
+ VERY IMPORTANT
+ 
+ *FIX LINES WITH //$%$%% COMMENT
+ 
+ */
+
+
+/*
  To do:
+ 
+ * level variable could become redundant. (may be removed in future)
  
  * fix background guide grid (important) - right now it only works properly at a window size of 1920, 1035 and a cell size of 70 with 15 gap.
  
