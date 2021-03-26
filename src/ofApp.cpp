@@ -11,6 +11,10 @@ storedBright brightObj;
 storedPos posObj;
 dmxChannel dmxChannelObj;   // DMX fixture channel object
 
+knownPanel knownPanelObj;
+
+strInputvalues strInputObj;
+
 
 int ofApp::gX(int x){ //function to generate X coords for element on grid
     return (x * defCellSize)+defCellGap;
@@ -18,6 +22,12 @@ int ofApp::gX(int x){ //function to generate X coords for element on grid
 
 int ofApp::gY(int Y){ //function to generate Y coords for element on grid
     return (Y * defCellSize)+defCellGap;
+}
+
+bool ofApp::waitTime(int time){
+    if (ofGetElapsedTimeMillis() > lastInteraction + time){
+        return true;
+    }
 }
 
 void ofApp::strInput(string current, int max){
@@ -32,15 +42,139 @@ void ofApp::strInput(string current, int max){
     ofSetColor(255, 255, 255);
     ofSetLineWidth(2);
     ofNoFill();
-//    ofDrawRectRounded(ofGetWindowWidth()/2+(defCellSize*4), ofGetWindowHeight()/2-(defCellSize/2), defCellSize, defCellSize, 5);
-//    panelType.drawString("ENTR", ofGetWindowWidth()/2+(defCellSize*4)+10, ofGetWindowHeight()/2-(defCellSize/2)+(defCellGap*3));
-//
-    usrInput.drawString(textValue, ofGetWindowWidth()/2-(defCellSize*5) + defCellGap, ofGetWindowHeight()/2-(defCellSize/2) + (defCellGap * 3 + 5));
-    panelName.drawString(to_string(textValue.size()) + " / " + to_string(max), ofGetWindowWidth()/2-(defCellSize*5), ofGetWindowHeight()/2+(defCellSize/2)+defCellGap);
+
+    usrInput.drawString(strInputObj.textValue, ofGetWindowWidth()/2-(defCellSize*5) + defCellGap, ofGetWindowHeight()/2-(defCellSize/2) + (defCellGap * 3 + 5));
+    panelName.drawString(to_string(strInputObj.textValue.size()) + " / " + to_string(max), ofGetWindowWidth()/2-(defCellSize*5), ofGetWindowHeight()/2+(defCellSize/2)+defCellGap);
     pageMain.drawString("Rename", ofGetWindowWidth()/2-(defCellSize*5), ofGetWindowHeight()/2-(defCellSize/2)-defCellGap);
 }
 
-void ofApp::controlPanel(int i){
+void ofApp::drawPanel(){
+    level = 3;  //  prevent users engaging with elements, when drawing
+    overlay = 0;
+
+    ofFill();
+    ofSetColor(80, 80, 80);
+    if (overPanel == false){
+        if (definedStart == false){
+            ofDrawRectangle(defCellGap + int(floor(((ofGetMouseX()-defCellGap)/defCellSize)))*defCellSize, defCellGap + int(floor(((ofGetMouseY()-defCellGap)/defCellSize)))*defCellSize, defCellSize, defCellSize);
+            if (waitTime(300)){
+                if (clickLeft(defCellGap + int(floor(((ofGetMouseX()-defCellGap)/defCellSize)))*defCellSize, defCellGap + int(floor(((ofGetMouseY()-defCellGap)/defCellSize)))*defCellSize, defCellSize, defCellSize)){
+                    startX = (int(floor(((ofGetMouseX()-defCellGap)/defCellSize)))*defCellSize) + defCellGap;
+                    startY = (int(floor(((ofGetMouseY()-defCellGap)/defCellSize)))*defCellSize) + defCellGap;
+                    definedStart = true;
+                    lastInteraction = ofGetElapsedTimeMillis();
+    //                cout << "EE " << to_string(startX) << " " << to_string(startY) << endl;
+                }
+            }
+           
+        } else {
+            theDiffX = ((int(floor(((ofGetMouseX()-defCellGap)/defCellSize)))*defCellSize) + defCellGap)+defCellSize - startX;
+            theDiffY = ((int(floor(((ofGetMouseY()-defCellGap)/defCellSize)))*defCellSize) + defCellGap)+defCellSize - startY;
+            if (theDiffX < 0){
+                theDiffX = theDiffX - defCellSize;  // Draw panel near user clicked
+            }
+            if (theDiffY < 0){
+                theDiffY = theDiffY - defCellSize;
+            }
+            if (theDiffX == 0){
+                theDiffX = -defCellSize;
+            }
+            if (theDiffY == 0){
+                theDiffY = -defCellSize;
+            }
+            cout << "X: " << to_string(theDiffX) << "\nY: " << to_string(theDiffY) << endl;
+            ofFill();
+            if (theDiffX < knownPanelType[panelToDraw].minWidth*defCellSize || theDiffY < knownPanelType[panelToDraw].minHeight*defCellSize){   // set color of panel according to if the dimensions meet minimum requirements
+                if (theDiffX < knownPanelType[panelToDraw].minWidth*defCellSize*-1 || theDiffY < knownPanelType[panelToDraw].minHeight*defCellSize*-1){
+                    ofSetColor(0, 255, 0,255);
+                } else {
+                    ofSetColor(255, 0, 0,255);
+                }
+            } else {
+                ofSetColor(0, 255, 0,255);
+            }
+            ofDrawRectangle(startX, startY, theDiffX, theDiffY);
+            if (ofGetElapsedTimeMillis() > lastInteraction + 300){
+                if (clickLeft(defCellGap + int(floor(((ofGetMouseX()-defCellGap)/defCellSize)))*defCellSize, defCellGap + int(floor(((ofGetMouseY()-defCellGap)/defCellSize)))*defCellSize, defCellSize, defCellSize)){
+                    addPanelStage = 0;
+                    overlay = 0;
+                    definedStart = false;
+                    panels.push_back(panelObj);
+                    panels[panels.size()-1].type = knownPanelType[panelToDraw].type;
+                    panels[panels.size()-1].name = knownPanelType[panelToDraw].name;
+                    if (theDiffX<0){
+                        startX = startX - theDiffX;
+                        theDiffX = theDiffX*-1;
+                    }
+                    if (theDiffY<0){
+                        startY = startY - theDiffY;
+                        theDiffY = theDiffY*-1;
+                    }
+                    
+                    panels[panels.size()-1].x = (startX-defCellGap)/defCellSize;
+                    panels[panels.size()-1].y = (startY-defCellGap)/defCellSize;
+                    panels[panels.size()-1].wi = int(theDiffX/defCellSize);
+                    panels[panels.size()-1].hi = int(theDiffY/defCellSize);
+                    panels[panels.size()-1].cellSize = knownPanelType[panelToDraw].cellSize;
+                
+                }
+            }
+        }
+    }
+}
+
+void ofApp::addPanelOverlay(){
+    level = 3;
+    overlay = 1;
+    ofSetColor(0, 0, 0,220);
+    int buttonWidth = (defCellSize*2.5)-(defCellGap*2);
+    int buttonHeight = (defCellSize*1.5)-(defCellGap*2);
+    int buttonRows = 3;
+    int buttonCols = 4;
+    int width = buttonWidth * buttonCols + (defCellGap * buttonCols) + defCellGap;
+    int height = buttonHeight * buttonRows + (defCellGap * buttonRows) + defCellGap;
+    ofFill();
+    ofDrawRectangle(0,0,ofGetWindowWidth(), ofGetWindowHeight());
+    ofSetColor(255,255,255,255);
+    pageMain.drawString("Add Panel", (ofGetWidth()/2)-(defCellSize*4)-(defCellGap*3), (ofGetHeight()/2)-(defCellSize*2)-(defCellGap*3) - defCellGap);
+    ofSetColor(70, 70, 70);
+    ofDrawRectRounded(ofGetWidth()/2 - width/2, ofGetHeight()/2 - height/2, width, height, 5);
+    ofNoFill();
+    ofSetColor(255, 0, 0);
+    ofDrawRectangle(ofGetWidth()/2 +(((ofGetWidth()/2)-(defCellSize*4)-(defCellGap*3))-defCellSize)/2, (ofGetHeight()/2)-(defCellSize*2)-(defCellGap*3)-defCellGap, defCellSize/2, -defCellSize/2);
+    fixText.drawString("EXT", ofGetWidth()/2 +(((ofGetWidth()/2)-(defCellSize*4)-(defCellGap*3))-defCellSize)/2+(defCellGap), (ofGetHeight()/2)-(defCellSize*2)-(defCellGap*3)-(defCellGap*2));
+    ofSetColor(255, 255, 255);
+    
+    int theX = 0;
+    int theY = 0;
+    
+//    if (clickLeft(ofGetWidth()/2 +(((ofGetWidth()/2)-(defCellSize*4)-(defCellGap*3))-defCellSize)/2, (ofGetHeight()/2)-(defCellSize*2)-(defCellGap*3)-defCellGap-(defCellSize/2), defCellSize, defCellSize)){
+//        addPanelStage = 0;
+//        overlay = 0;
+//    }
+    int panelIndex = 0;
+    for (int r = 0; r < 4; r++){
+        for (int c = 0; c < 4; c++){
+            if (panelIndex < knownPanelType.size()){
+                ofDrawRectRounded(ofGetWidth()/2 - width/2 + defCellGap + (buttonWidth * c) + (defCellGap * c), ofGetHeight()/2 - height/2 + defCellGap + (buttonHeight * r) + (defCellGap * r), buttonWidth, buttonHeight, 5);
+                fixMain.drawString(knownPanelType[panelIndex].name, ofGetWidth()/2 - width/2 + defCellGap + (buttonWidth * c) + (defCellGap * c) + defCellGap, ofGetHeight()/2 - height/2 + defCellGap + (buttonHeight * r) + (defCellGap * r) + (defCellGap*2));
+                theX = ofGetWidth()/2 - width/2 + defCellGap + (buttonWidth * c) + (defCellGap * c);
+                theY = ofGetHeight()/2 - height/2 + defCellGap + (buttonHeight * r) + (defCellGap * r);
+                if (mouseX > ofGetWidth()/2 - width/2 + defCellGap + (buttonWidth * c) + (defCellGap * c) && mouseX < ofGetWidth()/2 - width/2 + defCellGap + (buttonWidth * c) + (defCellGap * c) + buttonWidth && mouseY > ofGetHeight()/2 - height/2 + defCellGap + (buttonHeight * r) + (defCellGap * r) && mouseY < ofGetHeight()/2 - height/2 + defCellGap + (buttonHeight * r) + (defCellGap * r) + buttonHeight && mouseExe == 1){
+                    mouseExe = 0;
+                    panelToDraw = panelIndex;
+                    addPanelStage = 2;
+                    lastInteraction = ofGetElapsedTimeMillis();
+                
+                }
+            }
+            panelIndex++;
+        }
+    }
+
+}
+
+void ofApp::controlPanel(int i){    // function responsible for drawing the control panel function.
     int x = gX(panels[i].x);
     int y = gY(panels[i].y);
     int wi = panels[i].wi*defCellSize;
@@ -77,8 +211,13 @@ void ofApp::controlPanel(int i){
                     ofSetColor(252, 186, 3);
                     ofSetLineWidth(2);
                     ofDrawRectangle(x+(defCellGap/2) + (defCellSize*c), y+(defCellGap/2) + (defCellSize*r), defCellSize-(defCellGap), defCellSize-(defCellGap));
-                    if (clickLeft(x+(defCellGap/2) + (defCellSize*c), y+(defCellGap/2) + (defCellSize*r), defCellSize-(defCellGap), defCellSize-(defCellGap))){
-                        mode = cpActions[indexAction];
+                    if (overlay == 0 && waitTime(defWaitTime)){
+                        if (clickLeft(x+(defCellGap/2) + (defCellSize*c), y+(defCellGap/2) + (defCellSize*r), defCellSize-(defCellGap), defCellSize-(defCellGap))){
+                            mode = cpActions[indexAction];
+                            if (cpActions[indexAction] == "panels"){
+                                addPanelStage = 1;
+                            }
+                        }
                     }
                 }
             }
@@ -131,7 +270,7 @@ void ofApp::briMixer(int i){  // brightness mixer.
         ofSetColor(c1, c2, c3);
         ofDrawRectRounded(x + defSpace + (defCellSize * f), y + defCellSize + (defCellSize/2), wi - (defSpace * 2), hi-defCellSize*2,r);    // outside rectangle
         ofFill();
-        if (mouseX > x + defSpace + (defCellSize * f) && mouseX < x + defSpace + wi - (defSpace * 2) + (defCellSize * f) && mouseY >  y + defCellSize + (defCellSize/2) && mouseY < y + defCellSize + (defCellSize/2) + hi-defCellSize*2 && mouseExe == 1 && level < 2 && overlay == 0){   // check if mouse is in fader coordinates and map values.
+        if (mouseX > x + defSpace + (defCellSize * f) && mouseX < x + defSpace + wi - (defSpace * 2) + (defCellSize * f) && mouseY >  y + defCellSize + (defCellSize/2) && mouseY < y + defCellSize + (defCellSize/2) + hi-defCellSize*2 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){   // check if mouse is in fader coordinates and map values.
             mouseBrightness = ofMap(mouseY, y + defCellSize + (defCellSize/2) + hi-defCellSize*2-1, y + defCellSize + (defCellSize/2)+1, 0, 255);
         }
         ofDrawRectRounded(x + defSpace + 3 + (defCellSize * f), y + defCellSize + (defCellSize/2) + hi-defCellSize*2 -3, wi - (defSpace * 2)-6,ofMap(mouseBrightness, 0, 255, 0, ((hi-defCellSize*2)-6)*-1),r);  //  draw mapped value
@@ -139,14 +278,14 @@ void ofApp::briMixer(int i){  // brightness mixer.
         ofDrawRectRounded(x + defSpace + (defCellSize * f), y + defCellSize, wi - (defSpace * 2), (defCellSize/2)-10,r);  // MAX
         ofSetColor(0, 0, 0);
         fixText.drawString("MAX", x + defSpace + (wi/2)-20 + (defCellSize * f), y + defCellSize+ 20);
-        if (mouseX > x + defSpace + (defCellSize * f) && mouseX < x + defSpace +  wi - (defSpace * 2) + (defCellSize * f) && mouseY > y + defCellSize && mouseY < y + defCellSize + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0){  // check mouse position for MAX button
+        if (mouseX > x + defSpace + (defCellSize * f) && mouseX < x + defSpace +  wi - (defSpace * 2) + (defCellSize * f) && mouseY > y + defCellSize && mouseY < y + defCellSize + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){  // check mouse position for MAX button
             mouseBrightness = 255;
         }
         ofSetColor(255, 255, 255);
         ofDrawRectRounded(x + defSpace + (defCellSize * f), y + hi - (defCellSize/2) + 4, wi - (defSpace * 2), (defCellSize/2)-10,r);  // MIN
         ofSetColor(0, 0, 0);
         fixText.drawString("MIN", x + defSpace + (wi/2)-20 + (defCellSize * f),  y + hi - (defCellSize/2) + 20);
-        if (mouseX > x + defSpace + (defCellSize * f) && mouseX < x + defSpace +  wi - (defSpace * 2) + (defCellSize * f) && mouseY > y + hi - (defCellSize/2) + 4 && mouseY <  y + hi - (defCellSize/2) + 4 + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0){   // check mouse position for MIN button
+        if (mouseX > x + defSpace + (defCellSize * f) && mouseX < x + defSpace +  wi - (defSpace * 2) + (defCellSize * f) && mouseY > y + hi - (defCellSize/2) + 4 && mouseY <  y + hi - (defCellSize/2) + 4 + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){   // check mouse position for MIN button
             mouseBrightness = 0;
         }
 
@@ -208,7 +347,7 @@ void ofApp::rgbMixer(int i){       // RGB mixer
             ofSetColor(c1, c2, c3);
             ofDrawRectRounded(x + defSpace + ((wi/3) * f), y + (wi/3) + ((wi/3)/2), (wi/3) - (defSpace * 2), hi-(wi/3)*2,r);    // outside rectangle
             ofFill();
-            if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace + (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY >  y + (wi/3) + ((wi/3)/2) && mouseY < y + (wi/3) + ((wi/3)/2) + hi-(wi/3)*2 && mouseExe == 1 && level < 2 && overlay == 0){   // check if mouse is in position and map values.
+            if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace + (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY >  y + (wi/3) + ((wi/3)/2) && mouseY < y + (wi/3) + ((wi/3)/2) + hi-(wi/3)*2 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){   // check if mouse is in position and map values.
                 mouseColors[f] = ofMap(mouseY, y + (wi/3) + ((wi/3)/2) + hi-(wi/3)*2-1, y + (wi/3) + ((wi/3)/2)+1, 0, 255);
             }
             ofDrawRectRounded(x + defSpace + 3 + ((wi/3) * f), y + (wi/3) + ((wi/3)/2) + hi-(wi/3)*2 -3, (wi/3) - (defSpace * 2)-6,ofMap(mouseColors[f], 0, 255, 0, ((hi-(wi/3)*2)-6)*-1),r);  //  draw mapped value
@@ -216,14 +355,14 @@ void ofApp::rgbMixer(int i){       // RGB mixer
             ofDrawRectRounded(x + defSpace + ((wi/3) * f), y + (wi/3), (wi/3) - (defSpace * 2), (defCellSize/2)-10,r);  // MAX
             ofSetColor(0, 0, 0);
             fixText.drawString("MAX", x + defSpace + ((wi/3)/2)-20 + ((wi/3) * f), y + (wi/3)+ 20);
-            if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace +  (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY > y + (wi/3) && mouseY < y + (wi/3) + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0){
+            if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace +  (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY > y + (wi/3) && mouseY < y + (wi/3) + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){
                 mouseColors[f] = 255;
             }
             ofSetColor(255, 255, 255);
             ofDrawRectRounded(x + defSpace + ((wi/3) * f), y + hi - (defCellSize/2) + 4, (wi/3) - (defSpace * 2), (defCellSize/2)-10,r);  // MIN
             ofSetColor(0, 0, 0);
             fixText.drawString("MIN", x + defSpace + ((wi/3)/2)-20 + ((wi/3) * f),  y + hi - (defCellSize/2) + 20);
-            if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace +  (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY > y + hi - (defCellSize/2) + 4 && mouseY <  y + hi - (defCellSize/2) + 4 + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0){
+            if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace +  (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY > y + hi - (defCellSize/2) + 4 && mouseY <  y + hi - (defCellSize/2) + 4 + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){
                 mouseColors[f] = 0;
             }
 
@@ -284,7 +423,7 @@ void ofApp::wauv(int i){       // White Amber UV fader mixer panel.
                     
                     ofDrawRectRounded(x + defSpace + ((wi/3) * f), y + (wi/3) + ((wi/3)/2), (wi/3) - (defSpace * 2), hi-(wi/3)*2,r);    // outside rectangle
                     ofFill();
-                    if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace + (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY >  y + (wi/3) + ((wi/3)/2) && mouseY < y + (wi/3) + ((wi/3)/2) + hi-(wi/3)*2 && mouseExe == 1 && level < 2 && overlay == 0){   // check if mouse is in position and map values.
+                    if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace + (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY >  y + (wi/3) + ((wi/3)/2) && mouseY < y + (wi/3) + ((wi/3)/2) + hi-(wi/3)*2 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){   // check if mouse is in position and map values.
                         mouseColors[3+f] = ofMap(mouseY, y + (wi/3) + ((wi/3)/2) + hi-(wi/3)*2-1, y + (wi/3) + ((wi/3)/2)+1, 0, 255);
                     }
                     ofDrawRectRounded(x + defSpace + 3 + ((wi/3) * f), y + (wi/3) + ((wi/3)/2) + hi-(wi/3)*2 -3, (wi/3) - (defSpace * 2)-6,ofMap(mouseColors[3+f], 0, 255, 0, ((hi-(wi/3)*2)-6)*-1),r);  //  draw mapped value
@@ -292,14 +431,14 @@ void ofApp::wauv(int i){       // White Amber UV fader mixer panel.
                     ofDrawRectRounded(x + defSpace + ((wi/3) * f), y + (wi/3), (wi/3) - (defSpace * 2), (defCellSize/2)-10,r);  // MAX
                     ofSetColor(0, 0, 0);
                     fixText.drawString("MAX", x + defSpace + ((wi/3)/2)-20 + ((wi/3) * f), y + (wi/3)+ 20);
-                    if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace +  (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY > y + (wi/3) && mouseY < y + (wi/3) + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0){
+                    if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace +  (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY > y + (wi/3) && mouseY < y + (wi/3) + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){
                         mouseColors[3+f] = 255;
                     }
                     ofSetColor(255, 255, 255);
                     ofDrawRectRounded(x + defSpace + ((wi/3) * f), y + hi - (defCellSize/2) + 4, (wi/3) - (defSpace * 2), (defCellSize/2)-10,r);  // MIN
                     ofSetColor(0, 0, 0);
                     fixText.drawString("MIN", x + defSpace + ((wi/3)/2)-20 + ((wi/3) * f),  y + hi - (defCellSize/2) + 20);
-                    if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace +  (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY > y + hi - (defCellSize/2) + 4 && mouseY <  y + hi - (defCellSize/2) + 4 + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0){
+                    if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace +  (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY > y + hi - (defCellSize/2) + 4 && mouseY <  y + hi - (defCellSize/2) + 4 + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){
                         mouseColors[3+f] = 0;
                     }
 
@@ -345,7 +484,7 @@ void ofApp::posMixer(int i){       // White Amber UV fader mixer panel.
                     ofSetColor(255,255,255);
                     ofDrawRectRounded(x + defSpace + ((wi/2) * f), y + (wi/2) + ((wi/2)/2), (wi/2) - (defSpace * 2), hi-(wi/2)*2,r);    // outside rectangle
                     ofFill();
-                    if (mouseX > x + defSpace + ((wi/2) * f) && mouseX < x + defSpace + (wi/2) - (defSpace * 2) + ((wi/2) * f) && mouseY >  y + (wi/2) + ((wi/2)/2) && mouseY < y + (wi/2) + ((wi/2)/2) + hi-(wi/2)*2 && mouseExe == 1 && level < 2 && overlay == 0){   // check if mouse is in position and map values.
+                    if (mouseX > x + defSpace + ((wi/2) * f) && mouseX < x + defSpace + (wi/2) - (defSpace * 2) + ((wi/2) * f) && mouseY >  y + (wi/2) + ((wi/2)/2) && mouseY < y + (wi/2) + ((wi/2)/2) + hi-(wi/2)*2 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){   // check if mouse is in position and map values.
                         mousePosition[f] = ofMap(mouseY, y + (wi/2) + ((wi/2)/2) + hi-(wi/2)*2-1, y + (wi/2) + ((wi/2)/2)+1, 0, 255);
                     }
                     ofDrawRectRounded(x + defSpace + 3 + ((wi/2) * f), y + (wi/2) + ((wi/2)/2) + hi-(wi/2)*2 -3, (wi/2) - (defSpace * 2)-6,ofMap(mousePosition[f], 0, 255, 0, ((hi-(wi/2)*2)-6)*-1),r);  //  draw mapped value
@@ -353,14 +492,14 @@ void ofApp::posMixer(int i){       // White Amber UV fader mixer panel.
                     ofDrawRectRounded(x + defSpace + ((wi/2) * f), y + (wi/2), (wi/2) - (defSpace * 2), (defCellSize/2)-10,r);  // MAX
                     ofSetColor(0, 0, 0);
                     fixText.drawString("MAX", x + defSpace + ((wi/2)/2)-20 + ((wi/2) * f), y + (wi/2)+ 20);
-                    if (mouseX > x + defSpace + ((wi/2) * f) && mouseX < x + defSpace +  (wi/2) - (defSpace * 2) + ((wi/2) * f) && mouseY > y + (wi/2) && mouseY < y + (wi/2) + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0){
+                    if (mouseX > x + defSpace + ((wi/2) * f) && mouseX < x + defSpace +  (wi/2) - (defSpace * 2) + ((wi/2) * f) && mouseY > y + (wi/2) && mouseY < y + (wi/2) + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){
                         mousePosition[f] = 255;
                     }
                     ofSetColor(255, 255, 255);
                     ofDrawRectRounded(x + defSpace + ((wi/2) * f), y + hi - (defCellSize/2) + 4, (wi/2) - (defSpace * 2), (defCellSize/2)-10,r);  // MIN
                     ofSetColor(0, 0, 0);
                     fixText.drawString("MIN", x + defSpace + ((wi/2)/2)-20 + ((wi/2) * f),  y + hi - (defCellSize/2) + 20);
-                    if (mouseX > x + defSpace + ((wi/2) * f) && mouseX < x + defSpace +  (wi/2) - (defSpace * 2) + ((wi/2) * f) && mouseY > y + hi - (defCellSize/2) + 4 && mouseY <  y + hi - (defCellSize/2) + 4 + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0){
+                    if (mouseX > x + defSpace + ((wi/2) * f) && mouseX < x + defSpace +  (wi/2) - (defSpace * 2) + ((wi/2) * f) && mouseY > y + hi - (defCellSize/2) + 4 && mouseY <  y + hi - (defCellSize/2) + 4 + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){
                         mousePosition[f] = 0;
                     }
 
@@ -426,6 +565,7 @@ void ofApp::colorsPanel(int i){     // panel for storing / defining colours
                         ofDrawTriangle(x+(c*defCellSize), y+(r*defCellSize)+25, x+defCellSize+(c*defCellSize), y+(r*defCellSize)+25, x+(c*defCellSize), y+(r*defCellSize)+40);
                         ofSetColor(255, 255, 255);
                         fixText.drawString(to_string(panels[i].savedColors[getCellByIden].iden),x+ 10 + (c * defCellSize),y + 17 + (r*defCellSize));
+                        fixMain.drawString(panels[i].savedColors[getCellByIden].name,x+ 10 + (c * defCellSize),y + 45 + (r*defCellSize));
                         ofNoFill();
                         
                         
@@ -438,28 +578,34 @@ void ofApp::colorsPanel(int i){     // panel for storing / defining colours
                         fixText.drawString(to_string(panels[i].savedColors[getCellByIden].iden),x+ 10 + (c * defCellSize),y + 17 + (r*defCellSize));
                         ofNoFill();
                     }
+                    if (overlay == 0 && waitTime(defWaitTime)){
+                        if (clickLeft(x + (c * defCellSize), y + (r*defCellSize), defCellSize, defCellSize) && level < 2){   //if user clicks on a cell. store a color from color data mouse has.
+                            if (mode == "store"){
+                                mode = "";
+                                panels[i].savedColors[getCellByIden].r = mouseColors[0];
+                                panels[i].savedColors[getCellByIden].g = mouseColors[1];
+                                panels[i].savedColors[getCellByIden].b = mouseColors[2];
+                                panels[i].savedColors[getCellByIden].name = "C #" + to_string(getCellByIden);
+                                panels[i].savedColors[getCellByIden].set = true;
+                            } else if (mode == "delete") {
+                                mode = "";
+                                panels[i].savedColors[getCellByIden].r = 255;
+                                panels[i].savedColors[getCellByIden].g = 255;
+                                panels[i].savedColors[getCellByIden].b = 255;
+                                panels[i].savedColors[getCellByIden].name = "";
+                                panels[i].savedColors[getCellByIden].set = false;
+                            } else if (mode == "rename" && strInputObj.fieldInputState == 0){   // incomplete renaming function
+                                strInputObj.fieldInputState = 1;
+                                strInputObj.maxCount = 6;
+                                strInputObj.current = panels[i].savedColors[getCellByIden].name;
+                                strInputObj.textValue = panels[i].savedColors[getCellByIden].name;
+                                fieldPtr = &panels[i].savedColors[getCellByIden].name;
                     
-                    if (clickLeft(x + (c * defCellSize), y + (r*defCellSize), defCellSize, defCellSize) && level < 2 && overlay == 0){   //if user clicks on a cell. store a color from color data mouse has.
-                        if (mode == "store"){
-                            mode = "";
-                            panels[i].savedColors[getCellByIden].r = mouseColors[0];
-                            panels[i].savedColors[getCellByIden].g = mouseColors[1];
-                            panels[i].savedColors[getCellByIden].b = mouseColors[2];
-                            panels[i].savedColors[getCellByIden].name = "Color #" + to_string(getCellByIden);
-                            panels[i].savedColors[getCellByIden].set = true;
-                        } else if (mode == "delete") {
-                            mode = "";
-                            panels[i].savedColors[getCellByIden].r = 255;
-                            panels[i].savedColors[getCellByIden].g = 255;
-                            panels[i].savedColors[getCellByIden].b = 255;
-                            panels[i].savedColors[getCellByIden].name = "";
-                            panels[i].savedColors[getCellByIden].set = false;
-                        } else if (mode == "rename" && fieldInputState == 0){   // incomplete renaming function
-                            fieldInputState = 1;
-                            strInput("#", 6);
-                            
-                        }
+                            }
+                        
                     }
+                    }
+                    
                     getCellByIden++;
                 } else {
                     ofSetColor(217, 128, 255);   //set colour of cell
@@ -545,18 +691,20 @@ void ofApp::brightnessPanel(int i){
                         ofNoFill();
                         
                     }
-                    
-                    if (clickLeft(x + (c * defCellSize), y + (r*defCellSize), defCellSize, defCellSize) && level < 2 && overlay == 0){   //if user clicks on a cell. store a color from color data mouse has.
-                        if (mode == "store"){
-                            mode = "";
-                            panels[i].savedBrightness[getCellByIden].value = mouseBrightness;
-                            panels[i].savedBrightness[getCellByIden].set = true;
-                        } else if (mode == "delete") {
-                            mode = "";
-                            panels[i].savedBrightness[getCellByIden].value = 255;
-                            panels[i].savedBrightness[getCellByIden].set = false;
+                    if (overlay == 0 && waitTime(defWaitTime)){
+                        if (clickLeft(x + (c * defCellSize), y + (r*defCellSize), defCellSize, defCellSize) && level < 2){   //if user clicks on a cell. store a color from color data mouse has.
+                            if (mode == "store"){
+                                mode = "";
+                                panels[i].savedBrightness[getCellByIden].value = mouseBrightness;
+                                panels[i].savedBrightness[getCellByIden].set = true;
+                            } else if (mode == "delete") {
+                                mode = "";
+                                panels[i].savedBrightness[getCellByIden].value = 255;
+                                panels[i].savedBrightness[getCellByIden].set = false;
+                            }
                         }
                     }
+                    
                     
                     getCellByIden++;
                 } else {
@@ -631,7 +779,7 @@ void ofApp::posPanel(int i){
                         ofDrawTriangle(x+(c*defCellSize), y+(r*defCellSize)+25, x+defCellSize+(c*defCellSize), y+(r*defCellSize)+25, x+(c*defCellSize), y+(r*defCellSize)+40);
                         ofSetColor(255, 255, 255);
                         fixText.drawString(to_string(panels[i].savedPositions[getCellByIden].iden),x+ 10 + (c * defCellSize),y + 17 + (r*defCellSize));
-                        panelType.drawString(panels[i].savedPositions[getCellByIden].name,x+ 15 + (c * defCellSize),y + 44 + (r*defCellSize));
+                        panelType.drawString(panels[i].savedPositions[getCellByIden].name,x+ 5 + (c * defCellSize),y + 34 + (r*defCellSize));
                         ofNoFill();
                     } else {
                         ofSetColor(59, 194, 41);   //set colour of cell
@@ -642,18 +790,28 @@ void ofApp::posPanel(int i){
                         ofNoFill();
                         
                     }
+                    if (overlay == 0 && waitTime(defWaitTime)){
+                        if (clickLeft(x + (c * defCellSize), y + (r*defCellSize), defCellSize, defCellSize) && level < 2){   //if user clicks on a cell. store a color from color data mouse has.
+                            if (mode == "store"){
+                                mode = "";
+                                panels[i].savedPositions[getCellByIden].position = mousePosition;
+                                panels[i].savedPositions[getCellByIden].set = true;
+                                panels[i].savedPositions[getCellByIden].name = "p #" + to_string(getCellByIden);
+                            } else if (mode == "delete") {
+                                mode = "";
+                                panels[i].savedPositions[getCellByIden].position = {};
+                                panels[i].savedPositions[getCellByIden].set = false;
+                            } else if (mode == "rename" && strInputObj.fieldInputState == 0){   // incomplete renaming function
+                                strInputObj.fieldInputState = 1;
+                                strInputObj.maxCount = 6;
+                                strInputObj.current = panels[i].savedPositions[getCellByIden].name;
+                                strInputObj.textValue = panels[i].savedPositions[getCellByIden].name;
+                                fieldPtr = &panels[i].savedPositions[getCellByIden].name;
                     
-                    if (clickLeft(x + (c * defCellSize), y + (r*defCellSize), defCellSize, defCellSize) && level < 2 && overlay == 0){   //if user clicks on a cell. store a color from color data mouse has.
-                        if (mode == "store"){
-                            mode = "";
-                            panels[i].savedPositions[getCellByIden].position = mousePosition;
-                            panels[i].savedPositions[getCellByIden].set = true;
-                        } else if (mode == "delete") {
-                            mode = "";
-                            panels[i].savedPositions[getCellByIden].position = {};
-                            panels[i].savedPositions[getCellByIden].set = false;
+                            }
                         }
                     }
+                    
                     
                     getCellByIden++;
                 } else {
@@ -695,7 +853,11 @@ void ofApp::drawGrid(){     // needs work --> check main.cpp comment
 
 
 bool ofApp::clickLeft(int x, int y, int w, int h){
+//    if (ofGetMouseX() > x && ofGetMouseX() < x + w && ofGetMouseY() > y && ofGetMouseY() < y + h){
+//        cout << gamer << endl;
+//    }
     if (ofGetMouseX() > x && ofGetMouseX() < x + w && ofGetMouseY() > y && ofGetMouseY() < y + h && mouseExe == 1){
+        
         mouseExe = 0;  //reset mouse so no endless execution occurs.
         return true;
     } else {
@@ -715,7 +877,6 @@ void ofApp::addFixture(string name, bool simShow, int x, int y, int w, int h, in
     fixtures[fixtures.size()-1].universe = 1;
     fixtures[fixtures.size()-1].channelCount = 9;
     fixtures[fixtures.size()-1].address = fixtures.size() * 9 + 1;
-    //$%$%% fixtures[fixtures.size()-1].channelData = {0,0,50,rand() % 255,rand() % 255,rand() % 255,8,0,0};
     
 }
 
@@ -753,6 +914,7 @@ void ofApp::uipanel(int i){ //draw panels ---> i is the panelObj of the panel wi
     
     if (mouseX > x && mouseX < x+wi && mouseY > y && mouseY < y+hi){
         level = 1;
+        overPanel = true;
     }
     
     
@@ -788,10 +950,8 @@ void ofApp::simulatedFixture(int fixAddress){
     int y = gY(fixtures[fixAddress].y);
     int w = fixtures[fixAddress].w;
     int h = fixtures[fixAddress].h;
-    //$%$%% ofSetColor(fixtures[fixAddress].channelData[3], fixtures[fixAddress].channelData[4], fixtures[fixAddress].channelData[5]);
     ofDrawRectangle(x, y, w, h);
     ofSetColor(255, 255, 255);
-    //$%$%% fixMain.drawString(to_string(fixtures[fixAddress].channelData[2]),x + 20,y+38);
     ofFill();
     ofSetColor(70,70,70);
     ofDrawRectangle(x, y+h - 20, w, 20);
@@ -815,10 +975,10 @@ void ofApp::loadIconsFonts(){
     debugText.load("Lato-Regular.ttf", 15);
     panelName.load("Lato-Regular.ttf", 10);
     panelType.load("Lato-Bold.ttf", 15);
-    fixMain.load("Lato-Bold.ttf", 20);
+    fixMain.load("Lato-Bold.ttf", 15);
     pageMain.load("Lato-Bold.ttf", 45);
     usrInput.load("Lato-Regular.ttf", 30);
-    fixText.load("Lato-Regular.ttf", 10);
+    fixText.load("Lato-Regular.ttf", 7);
     
     // icons / images
     colorsIcon.load("panel_icons/colors.png");
@@ -826,124 +986,181 @@ void ofApp::loadIconsFonts(){
 
 //--------------------------------------------------------------
 void ofApp::setup(){
-    
+    lastInteraction = ofGetElapsedTimeMillis();
     loadIconsFonts();
     
+    // prepare known panel types for user definition
+    knownPanelType.push_back(knownPanelObj);
+    knownPanelType[knownPanelType.size()-1].type = "fixsimulation";
+    knownPanelType[knownPanelType.size()-1].name = "Fixture\nSimulation";
+    knownPanelType[knownPanelType.size()-1].minWidth = 5;
+    knownPanelType[knownPanelType.size()-1].minHeight = 4;
+    knownPanelType[knownPanelType.size()-1].cellSize = 40;
+    
+    knownPanelType.push_back(knownPanelObj);
+    knownPanelType[knownPanelType.size()-1].type = "controlpanel";
+    knownPanelType[knownPanelType.size()-1].name = "Control\nPanel";
+    knownPanelType[knownPanelType.size()-1].minWidth = 3;
+    knownPanelType[knownPanelType.size()-1].minHeight = 5;
+    knownPanelType[knownPanelType.size()-1].cellSize = 40;
+    
+    knownPanelType.push_back(knownPanelObj);
+    knownPanelType[knownPanelType.size()-1].type = "colorstor";
+    knownPanelType[knownPanelType.size()-1].name = "Colors";
+    knownPanelType[knownPanelType.size()-1].minWidth = 2;
+    knownPanelType[knownPanelType.size()-1].minHeight = 1;
+    knownPanelType[knownPanelType.size()-1].cellSize = 40;
+    
+    knownPanelType.push_back(knownPanelObj);
+    knownPanelType[knownPanelType.size()-1].type = "rgbmixer";
+    knownPanelType[knownPanelType.size()-1].name = "RGB\nmixer";
+    knownPanelType[knownPanelType.size()-1].minWidth = 5;
+    knownPanelType[knownPanelType.size()-1].minHeight = 4;
+    knownPanelType[knownPanelType.size()-1].cellSize = 40;
+    
+    knownPanelType.push_back(knownPanelObj);
+    knownPanelType[knownPanelType.size()-1].type = "brimixer";
+    knownPanelType[knownPanelType.size()-1].name = "Brightness\nMix";
+    knownPanelType[knownPanelType.size()-1].minWidth = 1;
+    knownPanelType[knownPanelType.size()-1].minHeight = 5;
+    knownPanelType[knownPanelType.size()-1].cellSize = defCellSize;   //blah
+    knownPanelType[knownPanelType.size()-1].defSpace = 5;
+    
+    
+    knownPanelType.push_back(knownPanelObj);
+    knownPanelType[knownPanelType.size()-1].type = "wauv";
+    knownPanelType[knownPanelType.size()-1].name = "WAUV Mix";
+    knownPanelType[knownPanelType.size()-1].minWidth = 4;
+    knownPanelType[knownPanelType.size()-1].minHeight = 5;
+    knownPanelType[knownPanelType.size()-1].cellSize = defCellSize;
+    knownPanelType[knownPanelType.size()-1].defSpace = 5;
+    
+    knownPanelType.push_back(knownPanelObj);
+    knownPanelType[knownPanelType.size()-1].type = "posMixer";
+    knownPanelType[knownPanelType.size()-1].name = "Position Mix";
+    knownPanelType[knownPanelType.size()-1].minWidth = 2;
+    knownPanelType[knownPanelType.size()-1].minHeight = 4;
+    knownPanelType[knownPanelType.size()-1].cellSize = defCellSize;
+    knownPanelType[knownPanelType.size()-1].defSpace = 5;
+    
+    knownPanelType.push_back(knownPanelObj);
+    knownPanelType[knownPanelType.size()-1].type = "posStor";
+    knownPanelType[knownPanelType.size()-1].name = "Positions";
+    knownPanelType[knownPanelType.size()-1].abbreviation = "Positn";
+    knownPanelType[knownPanelType.size()-1].minWidth = 2;
+    knownPanelType[knownPanelType.size()-1].minHeight = 1;
+    knownPanelType[knownPanelType.size()-1].cellSize = defCellSize;
+    knownPanelType[knownPanelType.size()-1].defSpace = 5;
+    
+    knownPanelType.push_back(knownPanelObj);
+    knownPanelType[knownPanelType.size()-1].type = "bristor";
+    knownPanelType[knownPanelType.size()-1].name = "Stored Brightness";
+    knownPanelType[knownPanelType.size()-1].minWidth = 2;
+    knownPanelType[knownPanelType.size()-1].minHeight = 2;
+    knownPanelType[knownPanelType.size()-1].cellSize = defCellSize;
+    knownPanelType[knownPanelType.size()-1].defSpace = 5;
+    
+//    // pre-drawn Panels
+//    panels.push_back(panelObj);
+//    panels[panels.size()-1].type = "fixsimulation";
+//    panels[panels.size()-1].name = "Fixture Simulation";
+//    panels[panels.size()-1].x = 5;
+//    panels[panels.size()-1].y = 1;
+//    panels[panels.size()-1].wi = 13;
+//    panels[panels.size()-1].hi = 2;
+//    panels[panels.size()-1].cellSize = 40;
     
     
     panels.push_back(panelObj);
-    panels[0].type = "fixsimulation";
-    panels[0].name = "Fixture Simulation";
-    panels[0].x = 5;
-    panels[0].y = 1;
-    panels[0].wi = 13;
-    panels[0].hi = 2;
-    panels[0].cellSize = 40;
-    
-    
-    panels.push_back(panelObj);
-    panels[1].type = "controlpanel";
-    panels[1].name = "Control Panel";
-    panels[1].x = 24;
-    panels[1].y = 8;
-    panels[1].wi = 3;
-    panels[1].hi = 5;
-    panels[1].cellSize = 40;
-    
-    panels.push_back(panelObj);
-    panels[2].type = "colorstor";
-    panels[2].name = "Defined Colors";
-    panels[2].x = 14;
-    panels[2].y = 4;
-    panels[2].wi = 5;
-    panels[2].hi = 7;
-    panels[2].cellSize = 40;
-
-
-    
-     
-    panels.push_back(panelObj);
-    panels[3].type = "colorstor";
-    panels[3].name = "Defined Colors";
-    panels[3].x = 6;
-    panels[3].y = 6;
-    panels[3].wi = 4;
-    panels[3].hi = 5;
-    panels[3].cellSize = 40;
-
-    
-    panels.push_back(panelObj);
-    panels[4].type = "rgbmixer";
-    panels[4].name = "Color mixer";
-    panels[4].x = 1;
-    panels[4].y = 1;
-    panels[4].wi = 3;
-    panels[4].hi = 4;
-    panels[4].cellSize = defCellSize;
-    panels[4].defSpace = 5;
-    
-    panels.push_back(panelObj);
-    panels[5].type = "brimixer";
-    panels[5].name = "Bri Mix";
-    panels[5].x = 11;
-    panels[5].y = 5;
-    panels[5].wi = 2;
-    panels[5].hi = 6;
-    panels[5].cellSize = defCellSize;
-    panels[5].defSpace = 5;
-    
-    panels.push_back(panelObj);
-    panels[6].type = "bristor";
-    panels[6].name = "Stored Brightness";
-    panels[6].x = 19;
-    panels[6].y = 2;
-    panels[6].wi = 6;
-    panels[6].hi = 2;
-    panels[6].cellSize = 40;
-   
-    panels.push_back(panelObj);
-    panels[7].type = "wauv";
-    panels[7].name = "White Amber UV mixer";
-    panels[7].x = 20;
-    panels[7].y = 6 ;
-    panels[7].wi = 3;
-    panels[7].hi = 4;
-    panels[7].cellSize = defCellSize;
-    panels[7].defSpace = 5;
-    
-    panels.push_back(panelObj);
-    panels[8].type = "posMixer";
-    panels[8].name = "Pan Tilt Mixer";
-    panels[8].x = 1;
-    panels[8].y = 6 ;
-    panels[8].wi = 2;
-    panels[8].hi = 4;
-    panels[8].cellSize = defCellSize;
-    panels[8].defSpace = 5;
-    
-    panels.push_back(panelObj);
-    panels[9].type = "posStor";
-    panels[9].name = "Positn";
-    panels[9].x = 10;
-    panels[9].y = 11;
-    panels[9].wi = 9;
-    panels[9].hi = 3;
-    panels[9].cellSize = defCellSize;
-    panels[9].defSpace = 5;
-    
-    fixtures.push_back(fixObj);
-    fixtures[0].name = "cobra";
-    fixtures[0].simShow = true;
-    fixtures[0].iden = 0;
-    fixtures[0].x = 6;
-    fixtures[0].y = 4;
-    fixtures[0].w = defCellSize;
-    fixtures[0].h = defCellSize;
-    fixtures[0].universe = 1;
-    fixtures[0].address = 1;
-    //$%$%% fixtures[0].channelData = {0,0,50,124,8,207,8,0,0};
-    //$%$%% fixtures[0].channels = {"pan", "tilt", "dimmer", "red", "green", "blue", "white", "amber", "uv"};    // purpose of each channel
-    fixtures[0].channelCount = fixtures[0].channels.size();
+    panels[panels.size()-1].type = "controlpanel";
+    panels[panels.size()-1].name = "Control Panel";
+    panels[panels.size()-1].x = 24;
+    panels[panels.size()-1].y = 8;
+    panels[panels.size()-1].wi = 3;
+    panels[panels.size()-1].hi = 5;
+    panels[panels.size()-1].cellSize = 40;
+        
+//    panels.push_back(panelObj);
+//    panels[panels.size()-1].type = "rgbmixer";
+//    panels[panels.size()-1].name = "Color mixer";
+//    panels[panels.size()-1].x = 1;
+//    panels[panels.size()-1].y = 1;
+//    panels[panels.size()-1].wi = 3;
+//    panels[panels.size()-1].hi = 4;
+//    panels[panels.size()-1].cellSize = defCellSize;
+//    panels[panels.size()-1].defSpace = 5;
+//
+//    panels.push_back(panelObj);
+//    panels[panels.size()-1].type = "brimixer";
+//    panels[panels.size()-1].name = "Brightness";
+//    panels[panels.size()-1].x = 11;
+//    panels[panels.size()-1].y = 5;
+//    panels[panels.size()-1].wi = 2;
+//    panels[panels.size()-1].hi = 6;
+//    panels[panels.size()-1].cellSize = defCellSize;
+//    panels[panels.size()-1].defSpace = 5;
+//
+//    panels.push_back(panelObj);
+//    panels[panels.size()-1].type = "bristor";
+//    panels[panels.size()-1].name = "Stored Brightness";
+//    panels[panels.size()-1].x = 19;
+//    panels[panels.size()-1].y = 2;
+//    panels[panels.size()-1].wi = 6;
+//    panels[panels.size()-1].hi = 2;
+//    panels[panels.size()-1].cellSize = 40;
+//
+//    panels.push_back(panelObj);
+//    panels[panels.size()-1].type = "colorstor";
+//    panels[panels.size()-1].name = "Stored Brightness";
+//    panels[panels.size()-1].x = 13;
+//    panels[panels.size()-1].y = 4;
+//    panels[panels.size()-1].wi = 5;
+//    panels[panels.size()-1].hi = 6;
+//    panels[panels.size()-1].cellSize = 40;
+//
+//    panels.push_back(panelObj);
+//    panels[panels.size()-1].type = "wauv";
+//    panels[panels.size()-1].name = "White Amber UV mixer";
+//    panels[panels.size()-1].x = 20;
+//    panels[panels.size()-1].y = 6 ;
+//    panels[panels.size()-1].wi = 3;
+//    panels[panels.size()-1].hi = 4;
+//    panels[panels.size()-1].cellSize = defCellSize;
+//    panels[panels.size()-1].defSpace = 5;
+//
+//    panels.push_back(panelObj);
+//    panels[panels.size()-1].type = "posMixer";
+//    panels[panels.size()-1].name = "Pan Tilt Mixer";
+//    panels[panels.size()-1].x = 1;
+//    panels[panels.size()-1].y = 6 ;
+//    panels[panels.size()-1].wi = 2;
+//    panels[panels.size()-1].hi = 4;
+//    panels[panels.size()-1].cellSize = defCellSize;
+//    panels[panels.size()-1].defSpace = 5;
+//
+//    panels.push_back(panelObj);
+//    panels[panels.size()-1].type = "posStor";
+//    panels[panels.size()-1].name = "Positn";
+//    panels[panels.size()-1].x = 10;
+//    panels[panels.size()-1].y = 11;
+//    panels[panels.size()-1].wi = 9;
+//    panels[panels.size()-1].hi = 3;
+//    panels[panels.size()-1].cellSize = defCellSize;
+//    panels[panels.size()-1].defSpace = 5;
+//
+//    fixtures.push_back(fixObj);
+//    fixtures[0].name = "cobra";
+//    fixtures[0].simShow = true;
+//    fixtures[0].iden = 0;
+//    fixtures[0].x = 6;
+//    fixtures[0].y = 4;
+//    fixtures[0].w = defCellSize;
+//    fixtures[0].h = defCellSize;
+//    fixtures[0].universe = 1;
+//    fixtures[0].address = 1;
+//    //$%$%% fixtures[0].channelData = {0,0,50,124,8,207,8,0,0};
+//    //$%$%% fixtures[0].channels = {"pan", "tilt", "dimmer", "red", "green", "blue", "white", "amber", "uv"};    // purpose of each channel
+//    fixtures[0].channelCount = fixtures[0].channels.size();
 }
 
 //--------------------------------------------------------------
@@ -954,6 +1171,7 @@ void ofApp::update(){
 //--------------------------------------------------------------
 void ofApp::draw(){
     level = 0;
+    overPanel = false;
     drawGrid();
     
 //    for (int i = 0; i < panels.size(); i++){ //draw panels
@@ -962,16 +1180,24 @@ void ofApp::draw(){
 //        simulatedFixture(1);
 //    }
     
-    uipanel(0);   //simulated fixture
-    uipanel(1);   //control panel
-    uipanel(2);   // color panel
-    uipanel(3);   // color panel
-    uipanel(4);   // color mixer
-    uipanel(5);   // color mixer
-    uipanel(6);
-    uipanel(7);
-    uipanel(8);
-    uipanel(9);
+//    uipanel(0);   //simulated fixture
+//    uipanel(1);   //control panel
+//    uipanel(2);   // color panel
+//    uipanel(3);   // color panel
+//    uipanel(4);   // color mixer
+//    uipanel(5);   // color mixer
+//    uipanel(6);
+//    uipanel(7);
+//    uipanel(8);
+//    uipanel(9);
+    
+    if (panels.size() > 0){
+        for (int i = 0; i < panels.size(); i++){
+            uipanel(i);
+        }
+    }
+
+    
 //    simulatedFixture(0);
 //    simulatedFixture(1);
     
@@ -985,9 +1211,19 @@ void ofApp::draw(){
     
     ofSetColor(255, 255, 255);
     
-//    strInput("#", 6);
+    if (strInputObj.fieldInputState == 1){
+        strInput("#", strInputObj.maxCount);
+    }
     
-    debugText.drawString("Lucent Developer | " + to_string(ofGetMouseX()) + " " + to_string(ofGetMouseY()) + " | F" + to_string(fixtures.size()) + " | W" + to_string(ofGetWindowWidth()) + " H" + to_string(ofGetWindowHeight()) + " | GR" + to_string(int(floor(((ofGetMouseX()-defCellGap)/defCellSize)))) + " " + to_string(int(floor(((ofGetMouseY()-defCellGap)/defCellSize)))) + " | m" + to_string(level) + " " + mode + " | o" + to_string(overlay), 20, ofGetWindowHeight() - 20); //Debug text
+    if (addPanelStage == 1){
+        addPanelOverlay();
+    } else if (addPanelStage == 2) {
+        drawPanel();
+    }
+
+
+    ofSetColor(255);
+    debugText.drawString("Lucent Developer | " + to_string(ofGetMouseX()) + " " + to_string(ofGetMouseY()) + " | F" + to_string(fixtures.size()) + " | W" + to_string(ofGetWindowWidth()) + " H" + to_string(ofGetWindowHeight()) + " | GR" + to_string(int(floor(((ofGetMouseX()-defCellGap)/defCellSize)))) + " " + to_string(int(floor(((ofGetMouseY()-defCellGap)/defCellSize)))) + " | m" + to_string(level) + " " + mode + " | o" + to_string(overlay) + " | op " + to_string(overPanel), 20, ofGetWindowHeight() - 20); //Debug text
     mouseExe = 0;   //allows user to click on something, drag mouse away and stop execution of that function from occuring. (Like accidently clicking something)
 }
 
@@ -995,25 +1231,31 @@ void ofApp::draw(){
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
     
-    if (key > 32 && key < 126 && textValue.length() < maxCharacterCount){
+    if (key > 31 && key < 126 && strInputObj.textValue.length() < maxCharacterCount){
         char myChar = key;
-        textValue = textValue + myChar;
-        cout << "TEXT: " << textValue << endl;
+        strInputObj.textValue = strInputObj.textValue + myChar;
+        cout << "TEXT: " << strInputObj.textValue << endl;
         cout << "KEY: " << myChar << endl;
         cout << "NUM: " << to_string(key) << endl;
         
         vector<string> myVect = {};
         
-        cout << textValue[0] << endl;
+        cout << strInputObj.textValue[0] << endl;
+    }
+
+    if (key == OF_KEY_BACKSPACE && strInputObj.textValue.size() > 0){
+        string original = strInputObj.textValue;
+        strInputObj.textValue = "";
+        for (int i = 0; i < original.size()-1; i++){
+            strInputObj.textValue = strInputObj.textValue + original[i];
+        }
     }
     
-    
-    if (key == OF_KEY_BACKSPACE && textValue.size() > 0){
-        string original = textValue;
-        textValue = "";
-        for (int i = 0; i < original.size()-1; i++){
-            textValue = textValue + original[i];
-        }
+    if (key == OF_KEY_RETURN && strInputObj.textValue.size() > 0){
+        strInputObj.fieldInputState = 0;
+        *fieldPtr = strInputObj.textValue;
+        mode = "";
+        overlay = 0;
     }
 }
 
@@ -1043,9 +1285,12 @@ void ofApp::mouseReleased(int x, int y, int button){
     // mouseExe determines if there has been a click. This value changes
     //back to 0 (don't do anything) so it doesn't continually call a function
     //or IF statement to complete an action. (1 Left, 2 Middle, 3 Right)
+    
+    
     if (button == 0){
         mouseExe = 1;
     }
+    
 
 }
 
@@ -1070,6 +1315,7 @@ void ofApp::gotMessage(ofMessage msg){
 }
 
 //--------------------------------------------------------------
-void ofApp::dragEvent(ofDragInfo dragInfo){ 
+void ofApp::dragEvent(ofDragInfo dragInfo){
 
 }
+

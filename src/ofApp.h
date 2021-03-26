@@ -2,6 +2,14 @@
 
 #include "ofMain.h"
 
+class strInputvalues{
+public:
+    int fieldInputState = 0; // 0 none/finished input, 1 onScreen input, 3 completed input - ready for change
+    string current = "";
+    int maxCount;
+    string textValue = "";
+};
+
 class dmxChannel{   // the dmx channel(s) of each defined fixture
 public:
     string purpose; // e.g "pan", "tilt", "dimmer", "red", "green", "blue", "white", "amber", "uv"
@@ -30,6 +38,17 @@ public:
     int blue = 255;
 };
 
+class knownPanel{
+public:
+    string type;
+    string name;
+    string abbreviation = "";
+    int minWidth;
+    int minHeight;
+    int cellSize;
+    int defSpace;
+};
+
 class ofApp : public ofBaseApp{
 
 	public:
@@ -39,11 +58,16 @@ class ofApp : public ofBaseApp{
 
     void loadIconsFonts();
     
+    string gamer = "";
+    
     // Variables regarding string input
     int maxCharacterCount;
-    string textValue = "";
     
     vector<string> cpActions = {"store", "", "setup", "delete", "rename", "panels", "move", "blackout", "channels", "", "", "", "", "clear", "off"};
+    vector<knownPanel> knownPanelType = {}; // stores objects with Panel type, name, minimum dimensions and abbreviation - generated in setup function.
+ 
+    
+    string * fieldPtr;
     
     //mouse variables
     int red = 255;
@@ -56,13 +80,29 @@ class ofApp : public ofBaseApp{
     int level = 0;  // 0 grid, 1 panel, 2 control panel, 3 fieldInput
     
     int overlay = 0; // 0 no overlay, 1 fieldInput
-    int fieldInputState = 0; // 0 none/finished input, 1 onScreen input, 3 completed input - ready for change
     string mode = "";
-
     
+    int lastInteraction;
+    int defWaitTime = 100; // time to wait after user finishes an action before calling the code inside a mouse related function (time in millis)
+    bool waitTime(int time);
+    
+    
+    bool overPanel;
     void simulatedFixture(int fixAddress);
     bool clickLeft(int x, int y, int w, int h);
     void strInput(string current, int max);
+    
+    void addPanelOverlay();
+    void drawPanel();
+    bool definedStart; //   has the start of a new panel (being drawn) been defined yet
+    int panelToDraw;
+    int addPanelStage = 0; // 0 = no process, 1 = show panel overlay, 2 = drawing panel.
+    int startX; // drawing panel starting coordinates
+    int startY;
+    int theDiffX;
+    int theDiffY;
+    
+    
     void addFixButton();
     int gX(int x);  //function to generate X coords for element on grid
     int gY(int y);  //function to generate Y coords for element on grid
@@ -77,6 +117,7 @@ class ofApp : public ofBaseApp{
     void briMixer(int i);
     void addFixture(string name, bool simShow, int x, int y, int w, int h, int universe, int address, int channelCount);
     void controlPanel(int i);
+
     
 		void keyPressed(int key);
 		void keyReleased(int key);
@@ -111,9 +152,6 @@ class ofApp : public ofBaseApp{
 
 
 };
-
-
-
 
 class fixColor{
 public:
