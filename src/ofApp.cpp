@@ -48,6 +48,47 @@ void ofApp::strInput(string current, int max){
     pageMain.drawString("Rename", ofGetWindowWidth()/2-(defCellSize*5), ofGetWindowHeight()/2-(defCellSize/2)-defCellGap);
 }
 
+void ofApp::showFileConfig(){
+    ofFill();
+    ofSetColor(80, 80, 80);
+    ofDrawRectangle(0, 0, ofGetWidth(), defCellGap + defCellSize*2.5);
+    ofSetColor(255, 255, 255);
+    pageMain.drawString("Showfiles", 25, 75);
+    pageSub.drawString("Save, Delete and configure showfiles", 25, 125);
+    
+    ofSetColor(180, 80, 80);    // draw "cross" exit button
+    ofSetLineWidth(0);
+    ofDrawRectangle(ofGetWidth()-defCellGap-defCellSize, defCellGap, defCellSize, defCellSize);
+    ofSetColor(80,80,80);
+    ofSetLineWidth(5);
+    ofDrawLine(ofGetWidth()-defCellSize, defCellGap*2, ofGetWidth()-(defCellGap*2), defCellSize);
+    ofDrawLine(ofGetWidth()-defCellSize, defCellSize, ofGetWidth()-(defCellGap*2), defCellGap*2);
+    if (overlay == 0){
+        if (clickLeft(ofGetWidth()-defCellGap-defCellSize, defCellGap, defCellSize, defCellSize)){
+            screen = 0;
+            
+            //  output colPanel string test
+            
+            for (int i = 0; i < panels.size(); i++){
+                ocol = ocol + to_string(panels[i].x) + "$" + to_string(panels[i].y) + "$" + to_string(panels[i].wi) + "$" + to_string(panels[i].hi) + "$" + to_string(panels[i].r) + "$" + to_string(panels[i].cellSize) + "$" + to_string(panels[i].defSpace) + "$" + panels[i].type + "$" + panels[i].name + "^";
+            }
+            
+        }
+    }
+    
+    ofSetColor(255, 255, 255,100);  // fixtures button
+    ofSetLineWidth(0);
+    ofDrawRectangle(ofGetWidth()-(defCellGap*2)-(defCellSize*3)-defCellSize, defCellGap, defCellSize*3, defCellSize);
+    ofSetColor(255, 255, 255, 255);
+    ofNoFill();
+    ofSetLineWidth(1);
+    ofDrawRectangle(ofGetWidth()-(defCellGap*2)-(defCellSize*3)-defCellSize, defCellGap, defCellSize*3, defCellSize);
+    panelType.drawString("Patching", ofGetWidth()-(defCellGap*2)-(defCellSize*3)-(defCellSize*0.5), defCellGap*4);
+    
+}
+
+
+
 void ofApp::drawPanel(){
     level = 3;  //  prevent users engaging with elements, when drawing
     overlay = 0;
@@ -82,7 +123,7 @@ void ofApp::drawPanel(){
             if (theDiffY == 0){
                 theDiffY = -defCellSize;
             }
-            cout << "X: " << to_string(theDiffX) << "\nY: " << to_string(theDiffY) << endl;
+           
             ofFill();
             if (theDiffX < knownPanelType[panelToDraw].minWidth*defCellSize || theDiffY < knownPanelType[panelToDraw].minHeight*defCellSize){   // set color of panel according to if the dimensions meet minimum requirements
                 if (theDiffX < knownPanelType[panelToDraw].minWidth*defCellSize*-1 || theDiffY < knownPanelType[panelToDraw].minHeight*defCellSize*-1){
@@ -214,6 +255,10 @@ void ofApp::controlPanel(int i){    // function responsible for drawing the cont
                     if (overlay == 0 && waitTime(defWaitTime)){
                         if (clickLeft(x+(defCellGap/2) + (defCellSize*c), y+(defCellGap/2) + (defCellSize*r), defCellSize-(defCellGap), defCellSize-(defCellGap))){
                             mode = cpActions[indexAction];
+                            if (cpActions[indexAction] == "showfile"){
+                                screen = 1;
+                                mode = "";
+                            }
                             if (cpActions[indexAction] == "panels"){
                                 addPanelStage = 1;
                             }
@@ -977,6 +1022,7 @@ void ofApp::loadIconsFonts(){
     panelType.load("Lato-Bold.ttf", 15);
     fixMain.load("Lato-Bold.ttf", 15);
     pageMain.load("Lato-Bold.ttf", 45);
+    pageSub.load("Lato-regular.ttf", 30);
     usrInput.load("Lato-Regular.ttf", 30);
     fixText.load("Lato-Regular.ttf", 7);
     
@@ -992,14 +1038,14 @@ void ofApp::setup(){
     // prepare known panel types for user definition
     knownPanelType.push_back(knownPanelObj);
     knownPanelType[knownPanelType.size()-1].type = "fixsimulation";
-    knownPanelType[knownPanelType.size()-1].name = "Fixture\nSimulation";
+    knownPanelType[knownPanelType.size()-1].name = "Fixture Simulation";
     knownPanelType[knownPanelType.size()-1].minWidth = 5;
     knownPanelType[knownPanelType.size()-1].minHeight = 4;
     knownPanelType[knownPanelType.size()-1].cellSize = 40;
     
     knownPanelType.push_back(knownPanelObj);
     knownPanelType[knownPanelType.size()-1].type = "controlpanel";
-    knownPanelType[knownPanelType.size()-1].name = "Control\nPanel";
+    knownPanelType[knownPanelType.size()-1].name = "Control Panel";
     knownPanelType[knownPanelType.size()-1].minWidth = 3;
     knownPanelType[knownPanelType.size()-1].minHeight = 5;
     knownPanelType[knownPanelType.size()-1].cellSize = 40;
@@ -1013,14 +1059,14 @@ void ofApp::setup(){
     
     knownPanelType.push_back(knownPanelObj);
     knownPanelType[knownPanelType.size()-1].type = "rgbmixer";
-    knownPanelType[knownPanelType.size()-1].name = "RGB\nmixer";
+    knownPanelType[knownPanelType.size()-1].name = "RGB mixer";
     knownPanelType[knownPanelType.size()-1].minWidth = 5;
     knownPanelType[knownPanelType.size()-1].minHeight = 4;
     knownPanelType[knownPanelType.size()-1].cellSize = 40;
     
     knownPanelType.push_back(knownPanelObj);
     knownPanelType[knownPanelType.size()-1].type = "brimixer";
-    knownPanelType[knownPanelType.size()-1].name = "Brightness\nMix";
+    knownPanelType[knownPanelType.size()-1].name = "Brightness Mix";
     knownPanelType[knownPanelType.size()-1].minWidth = 1;
     knownPanelType[knownPanelType.size()-1].minHeight = 5;
     knownPanelType[knownPanelType.size()-1].cellSize = defCellSize;   //blah
@@ -1172,7 +1218,11 @@ void ofApp::update(){
 void ofApp::draw(){
     level = 0;
     overPanel = false;
-    drawGrid();
+    
+    if (showGrid == true){
+        drawGrid();
+    }
+    
     
 //    for (int i = 0; i < panels.size(); i++){ //draw panels
 //        uipanel(i);
@@ -1190,6 +1240,10 @@ void ofApp::draw(){
 //    uipanel(7);
 //    uipanel(8);
 //    uipanel(9);
+    
+    if (screen == 0){
+        
+    
     
     if (panels.size() > 0){
         for (int i = 0; i < panels.size(); i++){
@@ -1215,10 +1269,17 @@ void ofApp::draw(){
         strInput("#", strInputObj.maxCount);
     }
     
+        showGrid = false;
     if (addPanelStage == 1){
         addPanelOverlay();
     } else if (addPanelStage == 2) {
         drawPanel();
+        showGrid = true;
+    }
+    
+    } else if (screen == 1){
+        drawGrid();
+        showFileConfig();
     }
 
 
@@ -1233,14 +1294,17 @@ void ofApp::keyPressed(int key){
     
     if (key > 31 && key < 126 && strInputObj.textValue.length() < maxCharacterCount){
         char myChar = key;
-        strInputObj.textValue = strInputObj.textValue + myChar;
-        cout << "TEXT: " << strInputObj.textValue << endl;
-        cout << "KEY: " << myChar << endl;
-        cout << "NUM: " << to_string(key) << endl;
+        if (myChar != '$' && myChar != '^'){
+            strInputObj.textValue = strInputObj.textValue + myChar;
+        }
+        
+//        cout << "TEXT: " << strInputObj.textValue << endl;
+//        cout << "KEY: " << myChar << endl;
+//        cout << "NUM: " << to_string(key) << endl;
         
         vector<string> myVect = {};
         
-        cout << strInputObj.textValue[0] << endl;
+//        cout << strInputObj.textValue[0] << endl;
     }
 
     if (key == OF_KEY_BACKSPACE && strInputObj.textValue.size() > 0){

@@ -34,6 +34,8 @@ int main( ){
 /*
  To do:
  
+ 
+ 
  * add ESC button support
  
  * fix drawing panel function so clicked on cell will be inlcuded if panel is drawn upward to the left
@@ -65,6 +67,8 @@ Possible bugs:
 
 /*
  Bugs:
+ 
+ * drawing a panel backwards
  
  * drawing a panel through another defined panel
  

@@ -58,16 +58,23 @@ class ofApp : public ofBaseApp{
 
     void loadIconsFonts();
     
-    string gamer = "";
+    int screen = 0; // What screen should be shown on the screen: 0 = showspace, 1, showfiles, 2, fixures
+    bool showGrid = false;
+    
     
     // Variables regarding string input
     int maxCharacterCount;
     
-    vector<string> cpActions = {"store", "", "setup", "delete", "rename", "panels", "move", "blackout", "channels", "", "", "", "", "clear", "off"};
+    vector<string> cpActions = {"store", "showfile", "setup", "delete", "rename", "panels", "move", "blackout", "channels", "", "", "", "", "clear", "off"};
     vector<knownPanel> knownPanelType = {}; // stores objects with Panel type, name, minimum dimensions and abbreviation - generated in setup function.
  
     
+    void showFileConfig();
+    
     string * fieldPtr;
+    
+    
+    string ocol;
     
     //mouse variables
     int red = 255;
@@ -137,6 +144,7 @@ class ofApp : public ofBaseApp{
     
     int defCellSize = 70;
     int defCellGap = 15;
+    int defMiniButton = defCellSize/2;
     
     int iconSize = 50; //size to draw icons
     
@@ -144,6 +152,7 @@ class ofApp : public ofBaseApp{
     ofTrueTypeFont panelName;
     ofTrueTypeFont fixMain;
     ofTrueTypeFont pageMain;
+    ofTrueTypeFont pageSub;
     ofTrueTypeFont fixText;
     ofTrueTypeFont panelType;
     ofTrueTypeFont usrInput;
