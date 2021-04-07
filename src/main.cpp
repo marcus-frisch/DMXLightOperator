@@ -62,6 +62,8 @@ Possible bugs:
   
  * generating a panel (eg lights) and then resizing it.
  
+ * potential bug located in line "if (panels[i].savedPositions[u].position.size() > 0){   //  could cause bugs" when loading a panel with zero savedPosition data
+ 
 */
 
 

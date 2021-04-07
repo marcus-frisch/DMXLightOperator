@@ -185,7 +185,7 @@ class storedPos{
 public:
     int iden;
     bool set = false;
-    string name = "#";
+    string name = "";
     vector<int> position = {};
 };
 

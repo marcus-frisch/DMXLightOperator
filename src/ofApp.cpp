@@ -69,8 +69,71 @@ void ofApp::showFileConfig(){
             
             //  output colPanel string test
             
+            // delimiter key: '^' = new panel, '$' new class attribute, '/' new (secondary) class attribute (savedData example storedBright), '|' new vector index, '*' no storedData, '`' blank textField
+            
+            ocol = "";
             for (int i = 0; i < panels.size(); i++){
-                ocol = ocol + to_string(panels[i].x) + "$" + to_string(panels[i].y) + "$" + to_string(panels[i].wi) + "$" + to_string(panels[i].hi) + "$" + to_string(panels[i].r) + "$" + to_string(panels[i].cellSize) + "$" + to_string(panels[i].defSpace) + "$" + panels[i].type + "$" + panels[i].name + "^";
+                ocol = ocol + to_string(panels[i].x) + "$" + to_string(panels[i].y) + "$" + to_string(panels[i].wi) + "$" + to_string(panels[i].hi) + "$" + to_string(panels[i].r) + "$" + to_string(panels[i].cellSize) + "$" + to_string(panels[i].defSpace) + "$" + panels[i].type + "$" + panels[i].name + "$";
+                string savedBrightness;
+                if (panels[i].savedBrightness.size() > 0){
+                    for (int u = 0; u < panels[i].savedBrightness.size(); u++){
+                        savedBrightness = savedBrightness + "/" + to_string(panels[i].savedBrightness[u].iden) + "/" + to_string(panels[i].savedBrightness[u].set) + "/" + to_string(panels[i].savedBrightness[u].value);
+                    }
+                } else {
+                    savedBrightness = "*";  // means no stored values
+                }
+                ocol = ocol + savedBrightness + "$";
+                
+                string savedPositions;
+                if (panels[i].savedPositions.size() > 0){
+                    for (int u = 0; u < panels[i].savedPositions.size(); u++){
+                        savedPositions = savedPositions + "/" + to_string(panels[i].savedPositions[u].iden) + "/" + to_string(panels[i].savedPositions[u].set) + "/";
+                        
+                        if (panels[i].savedPositions[u].name == ""){
+                            savedPositions = savedPositions + "`";
+                        } else {
+                            savedPositions = savedPositions + panels[i].savedPositions[u].name;
+                        }
+                        savedPositions = savedPositions + "/";
+                        
+                        for (int p = 0; p < panels[i].savedPositions[u].position.size(); p++){
+                            savedPositions = savedPositions + to_string(panels[i].savedPositions[u].position[p]) + "|";
+                        }
+                        
+                    }
+                } else {
+                    savedPositions = "*";  // means no stored values
+                }
+                ocol = ocol + savedPositions + "$";
+                
+                string savedColors;
+                if (panels[i].savedColors.size() > 0){
+                    for (int u = 0; u < panels[i].savedColors.size(); u++){
+                        savedColors = savedColors + "/" + to_string(panels[i].savedColors[u].iden) + "/" + to_string(panels[i].savedColors[u].set) + "/";
+                        
+                        if (panels[i].savedColors[u].name == ""){
+                            savedColors = savedColors + "`";
+                        } else {
+                            savedColors = savedColors + panels[i].savedColors[u].name;
+                        }
+                        savedColors = savedColors + "/" + to_string(panels[i].savedColors[u].r) + "/" + to_string(panels[i].savedColors[u].g) + "/" + to_string(panels[i].savedColors[u].b) + "/" + to_string(panels[i].savedColors[u].w);
+                    }
+                } else {
+                    savedColors = "*";  // means no stored values
+                }
+                ocol = ocol + savedColors + "$";
+                
+                if (panels[i].fadeData.size() > 0){
+                    for (int p = 0; p < panels[i].fadeData.size(); p++){
+                        ocol = ocol + to_string(panels[i].fadeData[p]) + "|";
+                    }
+                } else {
+                    ocol = ocol + "*";
+                }
+                
+                
+                ocol = ocol + "^";
+                
             }
             
         }
@@ -1294,7 +1357,7 @@ void ofApp::keyPressed(int key){
     
     if (key > 31 && key < 126 && strInputObj.textValue.length() < maxCharacterCount){
         char myChar = key;
-        if (myChar != '$' && myChar != '^'){
+        if (myChar != '!' && myChar != '@' && myChar != '#' && myChar != '$' && myChar != '%' && myChar != '^' && myChar != '&' && myChar != '*' && myChar != '(' && myChar != ')' && myChar != '/' && myChar != '|' && myChar != '`'){
             strInputObj.textValue = strInputObj.textValue + myChar;
         }
         
