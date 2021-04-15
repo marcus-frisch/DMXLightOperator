@@ -21,6 +21,9 @@ knownPanel knownPanelObj;
 
 strInputvalues strInputObj;
 
+string ocol = ""; // Represents showfile data as a string
+
+int showCardstartheight;
 
 int ofApp::gX(int x){ //function to generate X coords for element on grid
     return (x * defCellSize)+defCellGap;
@@ -71,10 +74,74 @@ void ofApp::strInput(string current, int max){
 
     usrInput.drawString(strInputObj.textValue, ofGetWindowWidth()/2-(defCellSize*5) + defCellGap, ofGetWindowHeight()/2-(defCellSize/2) + (defCellGap * 3 + 5));
     panelName.drawString(to_string(strInputObj.textValue.size()) + " / " + to_string(max), ofGetWindowWidth()/2-(defCellSize*5), ofGetWindowHeight()/2+(defCellSize/2)+defCellGap);
-    pageMain.drawString("Rename", ofGetWindowWidth()/2-(defCellSize*5), ofGetWindowHeight()/2-(defCellSize/2)-defCellGap);
+    pageMain.drawString(strInputHeading, ofGetWindowWidth()/2-(defCellSize*5), ofGetWindowHeight()/2-(defCellSize/2)-defCellGap);
 }
 
 void ofApp::showFileConfig(){
+    int showCardHeight = 2.5*defCellSize;
+    int showCardWidth = 12*defCellSize;
+
+    if (mouseY < defCellGap + defCellSize*3){
+        level = 1;
+    }
+    
+    ofFill();
+    for (int i = 0; i < showsList.size(); i++){ // Draw a card for each of the showfiles found
+        ofSetLineWidth(1);
+        ofSetColor(80, 80, 80);
+        ofDrawRectRounded(defCellGap, showCardstartheight+(i*showCardHeight)+defCellGap+(i*defCellGap), showCardWidth, showCardHeight, 5);
+        ofSetColor(255);
+        ofDrawLine(defCellSize*10, showCardstartheight+(i*showCardHeight)+defCellGap+(i*defCellGap), defCellSize*10, showCardstartheight+(i*showCardHeight)+(defCellSize*0.7)+(i*defCellGap));
+        cardMain.drawString(showsList[i].name, defCellGap*2, showCardstartheight+(i*showCardHeight)+(defCellGap*3)+(i*defCellGap));
+        fixMain.drawString(showsList[i].modified, defCellSize*10 + (defCellGap * 3), showCardstartheight+(i*showCardHeight)+(defCellGap*3)+(i*defCellGap));
+
+        if (showsList[i].active == true){
+            ofSetColor(155, 222, 78);
+            fixMain.drawString("Active", defCellGap*2, showCardstartheight+(i*showCardHeight)+defCellGap+(i*defCellGap)+(defCellSize*2.2));
+        }
+        
+        // Buttons for each card
+        ofNoFill();
+        ofSetColor(255);
+        ofSetLineWidth(2);
+        
+        if (showsList[i].freshStart == false){  // Showfiles found within the defined directory
+            for (int u = 0; u < showFileButtons.size(); u++){
+                string text = showFileButtons[u];
+                fixMain.drawString(text, showCardWidth - defCellSize - (defCellGap/2) - ((u*defCellSize)+defCellGap*u), showCardstartheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize+defCellGap));
+                ofDrawRectangle(showCardWidth - defCellSize - defCellGap - ((u*defCellSize)+defCellGap*u), showCardstartheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize-defCellGap), defCellSize, defCellSize);
+                if (u == 2 && showsList[i].active == false){
+                    u++;
+                }
+            }
+        } else {    // Fresh default showfile
+            fixMain.drawString("save", showCardWidth - defCellSize - (defCellGap/2) - ((0*defCellSize)+defCellGap*0), showCardstartheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize+defCellGap));
+            ofDrawRectangle(showCardWidth - defCellSize - defCellGap - ((0*defCellSize)+defCellGap*0), showCardstartheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize-defCellGap), defCellSize, defCellSize);
+            if (clickLeft(showCardWidth - defCellSize - defCellGap - ((0*defCellSize)+defCellGap*0), showCardstartheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize-defCellGap), defCellSize, defCellSize) && level == 0){
+                strInputHeading = "Save";
+                strInputObj.fieldInputState = 1;
+                strInputObj.maxCount = 32;
+                strInputObj.current = ofGetTimestampString("ShowFile %F %R");
+                strInputObj.textValue = ofGetTimestampString("ShowFile %F %R");
+                fieldPtr = &showsList[i].name;
+            }
+            if (strInputObj.fieldInputState == 3){
+                genShowFileDir();
+                ofstream out(showFilesDir + "/" + showsList[i].name + ".luct", fstream::out | fstream::trunc);
+                if (out.is_open()){
+                    genShowFileStr();
+                    out << ocol;
+                    out.flush();
+                    out.close(); // Closes file
+                    showsList[i].freshStart = false;
+                } else {
+                    cout << "Error with file" << endl;
+                }
+            }
+        }
+        
+        ofFill();
+    }
     ofFill();
     ofSetColor(80, 80, 80);
     ofDrawRectangle(0, 0, ofGetWidth(), defCellGap + defCellSize*3);
@@ -96,81 +163,6 @@ void ofApp::showFileConfig(){
     if (overlay == 0){
         if (clickLeft(ofGetWidth()-defCellGap-defCellSize, defCellGap, defCellSize, defCellSize)){
             screen = 0;
-            
-            //  output colPanel string test
-            
-            // delimiter key: '^' = new panel, '$' new class attribute, '/' new (secondary) class attribute (savedData example storedBright), '|' new vector index, '*' no storedData
-            
-            ocol = "";
-            for (int i = 0; i < panels.size(); i++){
-                ocol = ocol + to_string(panels[i].x) + "$" + to_string(panels[i].y) + "$" + to_string(panels[i].wi) + "$" + to_string(panels[i].hi) + "$" + to_string(panels[i].r) + "$" + to_string(panels[i].cellSize) + "$" + to_string(panels[i].defSpace) + "$" + panels[i].type + "$" + panels[i].name + "$";
-                string savedBrightness;
-                if (panels[i].savedBrightness.size() > 0){
-                    for (int u = 0; u < panels[i].savedBrightness.size(); u++){
-                        savedBrightness = savedBrightness + "/" + to_string(panels[i].savedBrightness[u].iden) + "/" + to_string(panels[i].savedBrightness[u].set) + "/" + to_string(panels[i].savedBrightness[u].value);
-                    }
-                } else {
-                    savedBrightness = "*";  // means no stored values
-                }
-                ocol = ocol + savedBrightness + "$";
-                
-                string savedPositions;
-                if (panels[i].savedPositions.size() > 0){
-                    for (int u = 0; u < panels[i].savedPositions.size(); u++){
-                        savedPositions = savedPositions + "/" + to_string(panels[i].savedPositions[u].iden) + "/" + to_string(panels[i].savedPositions[u].set) + "/";
-                        
-                        if (panels[i].savedPositions[u].name == ""){
-                            savedPositions = savedPositions + "`";
-                        } else {
-                            savedPositions = savedPositions + panels[i].savedPositions[u].name;
-                        }
-                        savedPositions = savedPositions + "/";
-                        
-                        if (panels[i].savedPositions[u].position.size() > 0){
-                            for (int p = 0; p < panels[i].savedPositions[u].position.size(); p++){
-                                savedPositions = savedPositions + to_string(panels[i].savedPositions[u].position[p]) + "|";
-                            }
-                        } else {
-                            savedPositions = savedPositions + "*";
-                        }
-                        
-                        
-                    }
-                } else {
-                    savedPositions = "*";  // means no stored values
-                }
-                ocol = ocol + savedPositions + "$";
-                
-                string savedColors;
-                if (panels[i].savedColors.size() > 0){
-                    for (int u = 0; u < panels[i].savedColors.size(); u++){
-                        savedColors = savedColors + "/" + to_string(panels[i].savedColors[u].iden) + "/" + to_string(panels[i].savedColors[u].set) + "/";
-                        
-                        if (panels[i].savedColors[u].name == ""){
-                            savedColors = savedColors + "`";
-                        } else {
-                            savedColors = savedColors + panels[i].savedColors[u].name;
-                        }
-                        savedColors = savedColors + "/" + to_string(panels[i].savedColors[u].r) + "/" + to_string(panels[i].savedColors[u].g) + "/" + to_string(panels[i].savedColors[u].b) + "/" + to_string(panels[i].savedColors[u].w);
-                    }
-                } else {
-                    savedColors = "*";  // means no stored values
-                }
-                ocol = ocol + savedColors + "$";
-                
-                if (panels[i].fadeData.size() > 0){
-                    for (int p = 0; p < panels[i].fadeData.size(); p++){
-                        ocol = ocol + to_string(panels[i].fadeData[p]) + "|";
-                    }
-                } else {
-                    ocol = ocol + "*";
-                }
-                
-                
-                ocol = ocol + "^";
-                
-            }
-            
         }
     }
     
@@ -183,55 +175,127 @@ void ofApp::showFileConfig(){
     ofDrawRectangle(ofGetWidth()-(defCellGap*2)-(defCellSize*3)-defCellSize, defCellGap, defCellSize*3, defCellSize);
     panelType.drawString("Patching", ofGetWidth()-(defCellGap*2)-(defCellSize*3)-(defCellSize*0.5), defCellGap*4);
     
-    int showCardHeight = 2.5*defCellSize;
-    int showCardWidth = 12*defCellSize;
-    int startheight = 3*defCellSize+defCellGap;
+    //  scroll buttons
     
-    
-    ofFill();
-    for (int i = 0; i < showsList.size(); i++){ // Draw a card for each of the showfiles found
-        ofSetLineWidth(1);
+    if (showCardstartheight >= 3*defCellSize+defCellGap){   // up button
+        ofFill();
+        ofSetColor(40,40,40);
+        ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2), defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2, 5);   // UP button
+    } else {
+        ofFill();
         ofSetColor(80, 80, 80);
-        ofDrawRectRounded(defCellGap, startheight+(i*showCardHeight)+defCellGap+(i*defCellGap), showCardWidth, showCardHeight, 5);
-        ofSetColor(255);
-        ofDrawLine(defCellSize*10, startheight+(i*showCardHeight)+defCellGap+(i*defCellGap), defCellSize*10, startheight+(i*showCardHeight)+(defCellSize*0.7)+(i*defCellGap));
-        cardMain.drawString(showsList[i].name, defCellGap*2, startheight+(i*showCardHeight)+(defCellGap*3)+(i*defCellGap));
-        fixMain.drawString(showsList[i].modified, defCellSize*10 + (defCellGap * 3), startheight+(i*showCardHeight)+(defCellGap*3)+(i*defCellGap));
-
-        if (showsList[i].active == true){
-            ofSetColor(155, 222, 78);
-            fixMain.drawString("Active", defCellGap*2, startheight+(i*showCardHeight)+defCellGap+(i*defCellGap)+(defCellSize*2.2));
-        }
-        
-        // Buttons for each card
-        ofNoFill();
-        ofSetColor(255);
+        ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2), defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2, 5);   // UP button
+        ofSetColor(252, 186, 3);
         ofSetLineWidth(2);
-        
-        if (showsList[i].freshStart == false){
-            for (int u = 0; u < showFileButtons.size(); u++){
-                string text = showFileButtons[u];
-                fixMain.drawString(text, showCardWidth - defCellSize - (defCellGap/2) - ((u*defCellSize)+defCellGap*u), startheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize+defCellGap));
-                ofDrawRectangle(showCardWidth - defCellSize - defCellGap - ((u*defCellSize)+defCellGap*u), startheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize-defCellGap), defCellSize, defCellSize);
-                if (u == 2 && showsList[i].active == false){
-                    u++;
-                }
+        ofNoFill();
+        ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2), defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2, 5);   // UP button
+        if (clickLeft(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2), defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2) && ofGetElapsedTimeMillis() > lastInteraction + defWaitTime){
+            lastInteraction = ofGetElapsedTimeMillis();
+            showCardstartheight = showCardstartheight + defCellSize;
+        }
+    }
+    
+    if (showCardstartheight+(showsList.size()*showCardHeight)+defCellGap+(showsList.size()*defCellGap)+showCardHeight <= ofGetHeight()-defCellGap){ // down button
+        ofFill();
+        ofSetColor(40,40,40);
+        ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2) + (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2 + defCellGap, defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2, 5);  // DOWN button
+    } else {
+        ofFill();
+        ofSetColor(80, 80, 80);
+        ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2) + (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2 + defCellGap, defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2, 5);  // DOWN button
+        ofSetColor(252, 186, 3);
+        ofSetLineWidth(2);
+        ofNoFill();
+        ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2) + (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2 + defCellGap, defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2, 5);  // DOWN button
+        if (clickLeft(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2) + (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2 + defCellGap, defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2) && ofGetElapsedTimeMillis() > lastInteraction + defWaitTime){
+            lastInteraction = ofGetElapsedTimeMillis();
+            showCardstartheight = showCardstartheight - defCellSize;
+        }
+    }
+    
+    ofSetColor(255);
+    fixText.drawString("up", defCellGap*2+showCardWidth+((defCellSize/2)/2), 3*defCellSize+(defCellGap*2) + ((ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2)/2);
+    fixText.drawString("dn", defCellGap*2+showCardWidth+((defCellSize/2)/2), 3*defCellSize+(defCellGap*2) + ((ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2)/2 + ((ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2 + defCellGap));
+    
+    
+    
+}
+
+void ofApp::genShowFileStr(){
+    //  output colPanel string test
+    
+    // delimiter key: '^' = new panel, '$' new class attribute, '/' new (secondary) class attribute (savedData example storedBright), '|' new vector index, '*' no storedData
+    
+    ocol = "";
+    for (int i = 0; i < panels.size(); i++){
+        ocol = ocol + to_string(panels[i].x) + "$" + to_string(panels[i].y) + "$" + to_string(panels[i].wi) + "$" + to_string(panels[i].hi) + "$" + to_string(panels[i].r) + "$" + to_string(panels[i].cellSize) + "$" + to_string(panels[i].defSpace) + "$" + panels[i].type + "$" + panels[i].name + "$";
+        string savedBrightness;
+        if (panels[i].savedBrightness.size() > 0){
+            for (int u = 0; u < panels[i].savedBrightness.size(); u++){
+                savedBrightness = savedBrightness + "/" + to_string(panels[i].savedBrightness[u].iden) + "/" + to_string(panels[i].savedBrightness[u].set) + "/" + to_string(panels[i].savedBrightness[u].value);
             }
         } else {
-            fixMain.drawString("save", showCardWidth - defCellSize - (defCellGap/2) - ((0*defCellSize)+defCellGap*0), startheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize+defCellGap));
-            ofDrawRectangle(showCardWidth - defCellSize - defCellGap - ((0*defCellSize)+defCellGap*0), startheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize-defCellGap), defCellSize, defCellSize);
+            savedBrightness = "*";  // means no stored values
+        }
+        ocol = ocol + savedBrightness + "$";
+        
+        string savedPositions;
+        if (panels[i].savedPositions.size() > 0){
+            for (int u = 0; u < panels[i].savedPositions.size(); u++){
+                savedPositions = savedPositions + "/" + to_string(panels[i].savedPositions[u].iden) + "/" + to_string(panels[i].savedPositions[u].set) + "/";
+                
+                if (panels[i].savedPositions[u].name == ""){
+                    savedPositions = savedPositions + "`";
+                } else {
+                    savedPositions = savedPositions + panels[i].savedPositions[u].name;
+                }
+                savedPositions = savedPositions + "/";
+                
+                if (panels[i].savedPositions[u].position.size() > 0){
+                    for (int p = 0; p < panels[i].savedPositions[u].position.size(); p++){
+                        savedPositions = savedPositions + to_string(panels[i].savedPositions[u].position[p]) + "|";
+                    }
+                } else {
+                    savedPositions = savedPositions + "*";
+                }
+                
+                
+            }
+        } else {
+            savedPositions = "*";  // means no stored values
+        }
+        ocol = ocol + savedPositions + "$";
+        
+        string savedColors;
+        if (panels[i].savedColors.size() > 0){
+            for (int u = 0; u < panels[i].savedColors.size(); u++){
+                savedColors = savedColors + "/" + to_string(panels[i].savedColors[u].iden) + "/" + to_string(panels[i].savedColors[u].set) + "/";
+                
+                if (panels[i].savedColors[u].name == ""){
+                    savedColors = savedColors + "`";
+                } else {
+                    savedColors = savedColors + panels[i].savedColors[u].name;
+                }
+                savedColors = savedColors + "/" + to_string(panels[i].savedColors[u].r) + "/" + to_string(panels[i].savedColors[u].g) + "/" + to_string(panels[i].savedColors[u].b) + "/" + to_string(panels[i].savedColors[u].w);
+            }
+        } else {
+            savedColors = "*";  // means no stored values
+        }
+        ocol = ocol + savedColors + "$";
+        
+        if (panels[i].fadeData.size() > 0){
+            for (int p = 0; p < panels[i].fadeData.size(); p++){
+                ocol = ocol + to_string(panels[i].fadeData[p]) + "|";
+            }
+        } else {
+            ocol = ocol + "*";
         }
         
-        ofFill();
+        
+        ocol = ocol + "^";
+        
     }
-    ofSetLineWidth(1);
-    ofSetColor(80, 80, 80);
-    //  scroll buttons
-    //ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2), defCellSize/2, ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4), 5);
-    
-    
-    
-    
+
 }
 
 
@@ -241,6 +305,7 @@ void ofApp::testFunction(){
     ofstream out(showFilesDir + "/Showfiles" + ofGetTimestampString("ShowFile %F %R") + ".luct", fstream::out | fstream::trunc);
 
     if (out.is_open()){
+        genShowFileStr();
         out << ocol;
         out.flush();
         out.close(); // Closes file
@@ -459,7 +524,6 @@ void ofApp::controlPanel(int i){    // function responsible for drawing the cont
                             }
                             if (cpActions[indexAction] == "panels"){
                                 addPanelStage = 1;
-
                             }
                         }
                     }
@@ -1099,12 +1163,19 @@ void ofApp::drawGrid(){     // needs work --> check main.cpp comment
 
 
 bool ofApp::clickLeft(int x, int y, int w, int h){
-//    if (ofGetMouseX() > x && ofGetMouseX() < x + w && ofGetMouseY() > y && ofGetMouseY() < y + h){
-//        cout << gamer << endl;
-//    }
+
     if (ofGetMouseX() > x && ofGetMouseX() < x + w && ofGetMouseY() > y && ofGetMouseY() < y + h && mouseExe == 1){
         
         mouseExe = 0;  //reset mouse so no endless execution occurs.
+        return true;
+    } else {
+        return false;
+    };
+}
+
+bool ofApp::pressLeft(int x, int y, int w, int h){
+
+    if (ofGetMouseX() > x && ofGetMouseX() < x + w && ofGetMouseY() > y && ofGetMouseY() < y + h && mousePExe == 1){
         return true;
     } else {
         return false;
@@ -1228,6 +1299,7 @@ void ofApp::loadIconsFonts(){
     pageSub.load("Lato-regular.ttf", 30);
     usrInput.load("Lato-Regular.ttf", 30);
     fixText.load("Lato-Regular.ttf", 7);
+    uiIcons.load("LibraSans-Bold.ttf", 20);
     
     // icons / images
     colorsIcon.load("panel_icons/colors.png");
@@ -1236,6 +1308,7 @@ void ofApp::loadIconsFonts(){
 //--------------------------------------------------------------
 void ofApp::setup(){
     lastInteraction = ofGetElapsedTimeMillis();
+    showCardstartheight = 3*defCellSize+defCellGap;
     loadIconsFonts();
     genShowFileDir();
     
@@ -1427,6 +1500,8 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
+//    ofSetColor(20,20,20);
+//    ofDrawRectangle(0, 0, ofGetWidth(), ofGetHeight());
     level = 0;
     overPanel = false;
     
@@ -1453,6 +1528,7 @@ void ofApp::draw(){
 //    uipanel(9);
     
     if (screen == 0){
+        strInputHeading = "Rename";
         
     
     
@@ -1491,12 +1567,18 @@ void ofApp::draw(){
     } else if (screen == 1){
         drawGrid();
         showFileConfig();
+        if (strInputObj.fieldInputState == 1){
+            strInput("#", strInputObj.maxCount);
+        }
     }
 
 
     ofSetColor(255);
     debugText.drawString("Lucent Developer | " + to_string(ofGetMouseX()) + " " + to_string(ofGetMouseY()) + " | F" + to_string(fixtures.size()) + " | W" + to_string(ofGetWindowWidth()) + " H" + to_string(ofGetWindowHeight()) + " | GR" + to_string(int(floor(((ofGetMouseX()-defCellGap)/defCellSize)))) + " " + to_string(int(floor(((ofGetMouseY()-defCellGap)/defCellSize)))) + " | m" + to_string(level) + " " + mode + " | o" + to_string(overlay) + " | op " + to_string(overPanel), 20, ofGetWindowHeight() - 20); //Debug text
     mouseExe = 0;   //allows user to click on something, drag mouse away and stop execution of that function from occuring. (Like accidently clicking something)
+    if (strInputObj.fieldInputState == 3){
+        strInputObj.fieldInputState = 0;
+    }
 }
 
 
@@ -1527,7 +1609,7 @@ void ofApp::keyPressed(int key){
     }
     
     if (key == OF_KEY_RETURN && strInputObj.textValue.size() > 0){
-        strInputObj.fieldInputState = 0;
+        strInputObj.fieldInputState = 3;
         *fieldPtr = strInputObj.textValue;
         mode = "";
         overlay = 0;
@@ -1546,12 +1628,18 @@ void ofApp::mouseMoved(int x, int y ){
 
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button){
-    mouseExe = 1;
+    if (button == 0){
+        mousePExe = 1;
+    }
 }
 
 //--------------------------------------------------------------
 void ofApp::mousePressed(int x, int y, int button){
-    
+    if (button == 0){
+        mousePExe = 1;
+    } else {
+        mousePExe = 0;
+    }
 }
 
 //--------------------------------------------------------------

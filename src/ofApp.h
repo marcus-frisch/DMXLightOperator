@@ -79,7 +79,7 @@ class ofApp : public ofBaseApp{
     string * fieldPtr;
     string showFilesDir = ofFilePath::getUserHomeDir() + "/Documents/Lucent Showfiles";
     
-    string ocol;
+    void genShowFileStr(); // Generates showfile data as a string
     
     //mouse variables
     int red = 255;
@@ -98,10 +98,11 @@ class ofApp : public ofBaseApp{
     int defWaitTime = 100; // time to wait after user finishes an action before calling the code inside a mouse related function (time in millis)
     bool waitTime(int time);
     
-    
     bool overPanel;
     void simulatedFixture(int fixAddress);
     bool clickLeft(int x, int y, int w, int h);
+    bool pressLeft(int x, int y, int w, int h);
+    string strInputHeading;
     void strInput(string current, int max);
     
     void addPanelOverlay();
@@ -151,7 +152,8 @@ class ofApp : public ofBaseApp{
     
     void drawGrid();
     
-    int mouseExe = 0;
+    int mouseExe = 0;   // Used for Click functionality
+    int mousePExe = 0;  // Used for Pressing functionality
     
     int defCellSize = 70;
     int defCellGap = 15;
@@ -168,6 +170,7 @@ class ofApp : public ofBaseApp{
     ofTrueTypeFont fixText;
     ofTrueTypeFont panelType;
     ofTrueTypeFont usrInput;
+    ofTrueTypeFont uiIcons;
     ofImage colorsIcon;
     
 
