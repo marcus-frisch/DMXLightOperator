@@ -68,11 +68,16 @@ class ofApp : public ofBaseApp{
     vector<string> cpActions = {"store", "showfile", "setup", "delete", "rename", "panels", "move", "blackout", "channels", "", "", "", "", "clear", "off"};
     vector<knownPanel> knownPanelType = {}; // stores objects with Panel type, name, minimum dimensions and abbreviation - generated in setup function.
  
+    vector<string> showFileButtons = {"delete", "save as", "load", "save"};
+    
+    
     
     void showFileConfig();
+    int currentShow = 0;    // Determines if current show is 0 = freshly made (not saved), 1 = loaded from showFile
+    
     
     string * fieldPtr;
-    
+    string showFilesDir = ofFilePath::getUserHomeDir() + "/Documents/Lucent Showfiles";
     
     string ocol;
     
@@ -124,6 +129,12 @@ class ofApp : public ofBaseApp{
     void briMixer(int i);
     void addFixture(string name, bool simShow, int x, int y, int w, int h, int universe, int address, int channelCount);
     void controlPanel(int i);
+    
+    void genShowFileDir();  // Used to generate the Showfile Directory
+    //void errorScreen(string message);   // Used to display an error to the User.
+    
+    
+    void testFunction();
 
     
 		void keyPressed(int key);
@@ -151,6 +162,7 @@ class ofApp : public ofBaseApp{
     ofTrueTypeFont debugText;
     ofTrueTypeFont panelName;
     ofTrueTypeFont fixMain;
+    ofTrueTypeFont cardMain;
     ofTrueTypeFont pageMain;
     ofTrueTypeFont pageSub;
     ofTrueTypeFont fixText;
@@ -166,7 +178,7 @@ class fixColor{
 public:
     int iden; //cell identifier
     bool set = false; //has user set colour data
-    string name = ""; //name
+    string name = "*"; //name
     int r;  //red
     int g;  //green
     int b;  //blue
@@ -185,7 +197,7 @@ class storedPos{
 public:
     int iden;
     bool set = false;
-    string name = "";
+    string name = "*";
     vector<int> position = {};
 };
 
@@ -198,10 +210,18 @@ public:
     int r = 5;    // panel corner radius
     int cellSize; // default w and h for fixtures
     int defSpace; // default seperating space size between cells
-    string type;  // panel type identifier     e.g "fixsimulation", "controlpanel"
-    string name;  // panel title e.g "simulation"    
+    string type = "*";  // panel type identifier     e.g "fixsimulation", "controlpanel"
+    string name = "*";  // panel title e.g "simulation"
     vector<storedBright> savedBrightness = {};
     vector<storedPos> savedPositions = {};
     vector<fixColor> savedColors = {};
     vector<int> fadeData = {100,100,100}; // if a panel has faders and the faders are generated using a FOR loop, data may be stored in here.
+};
+
+class showFileFile{
+public:
+    string name = "";
+    string modified = "";
+    bool freshStart = false;    // New showscreen on program start
+    bool active = false;
 };

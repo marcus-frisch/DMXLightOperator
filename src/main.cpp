@@ -17,7 +17,7 @@ int main( ){
  PROBLEMS:
  
  * Occasionally run into a "OUT OF MEMORY" error causing program to crash.
-   System restart has proven to be a fix for the meanwhil
+   System restart has proven to be a fix for the meanwhile
  
  
  */
@@ -34,7 +34,11 @@ int main( ){
 /*
  To do:
  
+ * add "last modified" functionality to showfiles (probably involves epoch --> mac (unix) and windows epoch the same????
  
+ * add verticle scroll bar for displaying found show files by checking the bottom coordinate of the last rectangle and see if it's greater > ofGetHeight()
+ 
+ * add error screen popup if program fails to generate default Lucent directory
  
  * add ESC button support
  
@@ -57,6 +61,8 @@ int main( ){
 
 /*
 Possible bugs:
+ 
+ * Dealing with paths and file read/write functionality on windows systems and it was developed using the MacOS structure
  
  * last interaction value could lead to interger overflow if program millis gets too large
   

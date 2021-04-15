@@ -1,5 +1,8 @@
 #include "ofApp.h"
 #include <math.h>
+#include <iostream>
+#include <fstream>
+#include <ctime>
 
 
 vector<panelClass> panels;  //stores panel object
@@ -10,6 +13,9 @@ fixColor colorObj;
 storedBright brightObj;
 storedPos posObj;
 dmxChannel dmxChannelObj;   // DMX fixture channel object
+
+vector<showFileFile> showsList;
+showFileFile showFileObject;
 
 knownPanel knownPanelObj;
 
@@ -28,6 +34,26 @@ bool ofApp::waitTime(int time){
     if (ofGetElapsedTimeMillis() > lastInteraction + time){
         return true;
     }
+}
+
+void ofApp::genShowFileDir(){
+    
+    bool doesExist = ofDirectory::doesDirectoryExist(showFilesDir);
+    
+    if (doesExist == false){
+        cout << "lucentShowFiles not found, creating directory now" << endl;
+        bool createDirectory = ofDirectory::createDirectory(showFilesDir);
+        if (createDirectory == true){
+            cout << "Directory created successfully" << endl;
+        } else {
+            cout << "Error creating directory" << endl;
+        }
+    } else {
+        cout << "lucentShowFiles already exists" << endl;
+    }
+    
+    
+    
 }
 
 void ofApp::strInput(string current, int max){
@@ -51,10 +77,14 @@ void ofApp::strInput(string current, int max){
 void ofApp::showFileConfig(){
     ofFill();
     ofSetColor(80, 80, 80);
-    ofDrawRectangle(0, 0, ofGetWidth(), defCellGap + defCellSize*2.5);
+    ofDrawRectangle(0, 0, ofGetWidth(), defCellGap + defCellSize*3);
     ofSetColor(255, 255, 255);
     pageMain.drawString("Showfiles", 25, 75);
     pageSub.drawString("Save, Delete and configure showfiles", 25, 125);
+    ofDrawLine(0, defCellSize*2.5, ofGetWidth(), defCellSize*2.5);
+    fixMain.drawString("Showfile name", defCellGap*2, defCellSize*3);
+    fixMain.drawString("Modified", defCellGap*2 + (defCellSize*10), defCellSize*3);
+    ofDrawLine(defCellSize*10 , defCellSize*2.5, defCellSize*10, defCellSize*3+defCellGap);
     
     ofSetColor(180, 80, 80);    // draw "cross" exit button
     ofSetLineWidth(0);
@@ -69,7 +99,7 @@ void ofApp::showFileConfig(){
             
             //  output colPanel string test
             
-            // delimiter key: '^' = new panel, '$' new class attribute, '/' new (secondary) class attribute (savedData example storedBright), '|' new vector index, '*' no storedData, '`' blank textField
+            // delimiter key: '^' = new panel, '$' new class attribute, '/' new (secondary) class attribute (savedData example storedBright), '|' new vector index, '*' no storedData
             
             ocol = "";
             for (int i = 0; i < panels.size(); i++){
@@ -96,9 +126,14 @@ void ofApp::showFileConfig(){
                         }
                         savedPositions = savedPositions + "/";
                         
-                        for (int p = 0; p < panels[i].savedPositions[u].position.size(); p++){
-                            savedPositions = savedPositions + to_string(panels[i].savedPositions[u].position[p]) + "|";
+                        if (panels[i].savedPositions[u].position.size() > 0){
+                            for (int p = 0; p < panels[i].savedPositions[u].position.size(); p++){
+                                savedPositions = savedPositions + to_string(panels[i].savedPositions[u].position[p]) + "|";
+                            }
+                        } else {
+                            savedPositions = savedPositions + "*";
                         }
+                        
                         
                     }
                 } else {
@@ -148,6 +183,71 @@ void ofApp::showFileConfig(){
     ofDrawRectangle(ofGetWidth()-(defCellGap*2)-(defCellSize*3)-defCellSize, defCellGap, defCellSize*3, defCellSize);
     panelType.drawString("Patching", ofGetWidth()-(defCellGap*2)-(defCellSize*3)-(defCellSize*0.5), defCellGap*4);
     
+    int showCardHeight = 2.5*defCellSize;
+    int showCardWidth = 12*defCellSize;
+    int startheight = 3*defCellSize+defCellGap;
+    
+    
+    ofFill();
+    for (int i = 0; i < showsList.size(); i++){ // Draw a card for each of the showfiles found
+        ofSetLineWidth(1);
+        ofSetColor(80, 80, 80);
+        ofDrawRectRounded(defCellGap, startheight+(i*showCardHeight)+defCellGap+(i*defCellGap), showCardWidth, showCardHeight, 5);
+        ofSetColor(255);
+        ofDrawLine(defCellSize*10, startheight+(i*showCardHeight)+defCellGap+(i*defCellGap), defCellSize*10, startheight+(i*showCardHeight)+(defCellSize*0.7)+(i*defCellGap));
+        cardMain.drawString(showsList[i].name, defCellGap*2, startheight+(i*showCardHeight)+(defCellGap*3)+(i*defCellGap));
+        fixMain.drawString(showsList[i].modified, defCellSize*10 + (defCellGap * 3), startheight+(i*showCardHeight)+(defCellGap*3)+(i*defCellGap));
+
+        if (showsList[i].active == true){
+            ofSetColor(155, 222, 78);
+            fixMain.drawString("Active", defCellGap*2, startheight+(i*showCardHeight)+defCellGap+(i*defCellGap)+(defCellSize*2.2));
+        }
+        
+        // Buttons for each card
+        ofNoFill();
+        ofSetColor(255);
+        ofSetLineWidth(2);
+        
+        if (showsList[i].freshStart == false){
+            for (int u = 0; u < showFileButtons.size(); u++){
+                string text = showFileButtons[u];
+                fixMain.drawString(text, showCardWidth - defCellSize - (defCellGap/2) - ((u*defCellSize)+defCellGap*u), startheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize+defCellGap));
+                ofDrawRectangle(showCardWidth - defCellSize - defCellGap - ((u*defCellSize)+defCellGap*u), startheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize-defCellGap), defCellSize, defCellSize);
+                if (u == 2 && showsList[i].active == false){
+                    u++;
+                }
+            }
+        } else {
+            fixMain.drawString("save", showCardWidth - defCellSize - (defCellGap/2) - ((0*defCellSize)+defCellGap*0), startheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize+defCellGap));
+            ofDrawRectangle(showCardWidth - defCellSize - defCellGap - ((0*defCellSize)+defCellGap*0), startheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize-defCellGap), defCellSize, defCellSize);
+        }
+        
+        ofFill();
+    }
+    ofSetLineWidth(1);
+    ofSetColor(80, 80, 80);
+    //  scroll buttons
+    //ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2), defCellSize/2, ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4), 5);
+    
+    
+    
+    
+}
+
+
+void ofApp::testFunction(){
+    cout << "running test function" << endl;
+    genShowFileDir();
+    ofstream out(showFilesDir + "/Showfiles" + ofGetTimestampString("ShowFile %F %R") + ".luct", fstream::out | fstream::trunc);
+
+    if (out.is_open()){
+        out << ocol;
+        out.flush();
+        out.close(); // Closes file
+    } else {
+        cout << "Error with file" << endl;
+    }
+        
 }
 
 
@@ -321,9 +421,45 @@ void ofApp::controlPanel(int i){    // function responsible for drawing the cont
                             if (cpActions[indexAction] == "showfile"){
                                 screen = 1;
                                 mode = "";
+                                
+                                if (showsList[0].freshStart == true){
+                                    showsList = {};
+                                    showsList.push_back(showFileObject);
+                                    showsList[0].name = ofGetTimestampString("Temp ShowFile %F %R");
+                                    showsList[0].modified = "-";
+                                    showsList[0].freshStart = true;
+                                    showsList[0].active = true;
+                                } else {
+                                    showsList = {};
+                                }
+                                
+                                ofDirectory dir(showFilesDir);  // Checks directory for saved showfiles and adds them to the vector
+                                dir.allowExt("luct");   //  The next few lines of functionality are incomplete
+                                dir.listDir();
+                                dir.sortByDate();
+                                
+                                
+                                
+                                for (int i = 0; i < dir.size(); i++){
+                                    showsList.push_back(showFileObject);
+                                    showsList[showsList.size()-1].name = dir.getName(i);
+                                    showsList[showsList.size()-1].freshStart = false;
+                                    showsList[showsList.size()-1].active = false;
+                                    //long number = boost::filesystem::last_write_time(dir.getPath(i));
+                                    showsList[showsList.size()-1].modified = "-";
+                                    //cout << gmtime(number) << endl;
+                                // to_string(boost::filesystem::last_write_time(dir.getPath(i)));
+                                // std::asctime(std::localtime(&result))
+                                }
+                                
+                                
+                                
+                                
+                                
                             }
                             if (cpActions[indexAction] == "panels"){
                                 addPanelStage = 1;
+
                             }
                         }
                     }
@@ -332,10 +468,12 @@ void ofApp::controlPanel(int i){    // function responsible for drawing the cont
             indexAction++;
         }
     }
-    if (clickLeft(x, y, 30, 30)){
-        cout << "new fixture" << endl;
-        addFixture("cobra", true, 0, 0, 0, 0, 0, 0, 0);
-    }
+//    if (clickLeft(x, y, 30, 30)){
+//        cout << "new fixture" << endl;
+//        //addFixture("cobra", true, 0, 0, 0, 0, 0, 0, 0);
+//        testFunction();
+//
+//    }
 }
 
 
@@ -1003,8 +1141,9 @@ void ofApp::addFixButton(){
     ofDrawRectangle(x, y, 30, 30);
     
     if (clickLeft(x, y, 30, 30)){
-        cout << "new fixture" << endl;
-        addFixture("cobra", true, 0, 0, 0, 0, 0, 0, 0);
+        //cout << "new fixture" << endl;
+        //addFixture("cobra", true, 0, 0, 0, 0, 0, 0, 0);
+        testFunction();
     }
 }
 
@@ -1084,6 +1223,7 @@ void ofApp::loadIconsFonts(){
     panelName.load("Lato-Regular.ttf", 10);
     panelType.load("Lato-Bold.ttf", 15);
     fixMain.load("Lato-Bold.ttf", 15);
+    cardMain.load("Lato-Bold.ttf", 22);
     pageMain.load("Lato-Bold.ttf", 45);
     pageSub.load("Lato-regular.ttf", 30);
     usrInput.load("Lato-Regular.ttf", 30);
@@ -1097,6 +1237,14 @@ void ofApp::loadIconsFonts(){
 void ofApp::setup(){
     lastInteraction = ofGetElapsedTimeMillis();
     loadIconsFonts();
+    genShowFileDir();
+    
+    showsList.push_back(showFileObject);
+    showsList[0].name = ofGetTimestampString("ShowFile %F %R");
+    showsList[0].modified = "-";
+    showsList[0].freshStart = true;
+    showsList[0].active = true;
+    
     
     // prepare known panel types for user definition
     knownPanelType.push_back(knownPanelObj);
