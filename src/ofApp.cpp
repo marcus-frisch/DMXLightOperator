@@ -2,7 +2,9 @@
 #include <math.h>
 #include <iostream>
 #include <fstream>
+#include <string>
 #include <ctime>
+#include <cstdio>
 
 
 vector<panelClass> panels;  //stores panel object
@@ -14,7 +16,9 @@ storedBright brightObj;
 storedPos posObj;
 dmxChannel dmxChannelObj;   // DMX fixture channel object
 
+
 vector<showFileFile> showsList;
+vector<showFileFile> showsListAlt; // Used as a alt to the main to store showfiles. e.g used when removing a showfile index from the main array
 showFileFile showFileObject;
 
 knownPanel knownPanelObj;
@@ -77,7 +81,93 @@ void ofApp::strInput(string current, int max){
     pageMain.drawString(strInputHeading, ofGetWindowWidth()/2-(defCellSize*5), ofGetWindowHeight()/2-(defCellSize/2)-defCellGap);
 }
 
-void ofApp::showFileConfig(){
+void ofApp::delOverlay(){
+    level = 3;
+    overlay = 1;
+    ofSetColor(0, 0, 0,220);
+    ofFill();
+    ofDrawRectangle(0,0,ofGetWindowWidth(), ofGetWindowHeight());
+    int headerHeight = defCellGap*3;
+    int width = 7*defCellSize;
+    int height = 4*defCellSize;
+    
+    int buttonWidth = defCellSize*2;
+    int buttonHeight = defCellSize;
+    
+    ofSetColor(80, 80, 80);
+    ofDrawRectRounded(ofGetWidth()/2-width/2, ofGetHeight()/2-height/2, width, height, 5);  // overlay body
+    ofSetColor(235, 64, 52);
+    ofRectangle header; // Define header variables
+    header.x = ofGetWidth()/2-width/2;
+    header.y = ofGetHeight()/2-height/2;
+    header.width = width;
+    header.height = headerHeight;
+    ofDrawRectRounded(header, 5,5,0,0); // draw header
+    ofNoFill();
+    ofSetLineWidth(2);
+    ofDrawRectRounded(ofGetWidth()/2-width/2, ofGetHeight()/2-height/2, width, height, 5);  // overlay body
+    
+    ofSetColor(255);
+    panelType.drawString("DELETE/REMOVE", ofGetWidth()/2-(defCellSize), ofGetHeight()/2-height/2 + defCellGap*2);
+    overlayBody.drawString("Are you sure you want to\n delete " + delData2, ofGetWidth()/2-(width/2)+defCellGap, ofGetHeight()/2-height/2 + defCellGap*6);
+    
+    // YES button
+    ofSetColor(235, 64, 52);
+    ofDrawRectRounded(ofGetWidth()/2 - defCellGap - buttonWidth, ofGetHeight()/2+height/2 - defCellGap - buttonHeight, buttonWidth, buttonHeight, 5);
+    if (clickLeft(ofGetWidth()/2 - defCellGap - buttonWidth, ofGetHeight()/2+height/2 - defCellGap - buttonHeight, buttonWidth, buttonHeight)){
+        overlay = 0;
+        ofDirectory::removeDirectory(delData1, true, false);
+        showsListAlt = {};
+        for (int i = 0; i < showsList.size(); i++){
+            if (showsList[i].name != delData2){
+                showsListAlt.push_back(showFileObject);
+                showsListAlt[showsListAlt.size()-1].name = showsList[i].name;
+                showsListAlt[showsListAlt.size()-1].modified = showsList[i].modified;
+                showsListAlt[showsListAlt.size()-1].path = showsList[i].path;
+                showsListAlt[showsListAlt.size()-1].freshStart = showsList[i].freshStart;
+                showsListAlt[showsListAlt.size()-1].active = showsList[i].active;
+            
+            }
+        }
+        showsList = {};
+
+        for (int i = 0; i < showsListAlt.size(); i++){
+            showsList.push_back(showFileObject);
+            showsList[showsList.size()-1].name = showsListAlt[i].name;
+            showsList[showsList.size()-1].modified = showsListAlt[i].modified;
+            showsList[showsList.size()-1].path = showsListAlt[i].path;
+            showsList[showsList.size()-1].freshStart = showsListAlt[i].freshStart;
+            showsList[showsList.size()-1].active = showsListAlt[i].active;
+        }
+        cout << showsList.size() << endl;
+      
+        delData1 = "";
+        delData2 = "";
+        showDel = false;
+        showsListAlt = {};
+    }
+    
+    
+    
+    // NO button
+    ofSetColor(255);
+    ofDrawRectRounded(ofGetWidth()/2 + defCellGap, ofGetHeight()/2+height/2 - defCellGap - buttonHeight, buttonWidth, buttonHeight, 5);
+    if (clickLeft(ofGetWidth()/2 + defCellGap, ofGetHeight()/2+height/2 - defCellGap - buttonHeight, buttonWidth, buttonHeight)){
+        showDel = false;
+        delData1 = "";
+        delData2 = "";
+        overlay = 0;
+    }
+    
+    
+    
+    cardMain.drawString("YES", ofGetWidth()/2 - buttonWidth + defCellGap, ofGetHeight()/2+height/2 + defCellGap*2 - buttonHeight);
+    cardMain.drawString("NO", ofGetWidth()/2 + defCellGap*2, ofGetHeight()/2+height/2 + defCellGap*2 - buttonHeight);
+    
+    
+}
+
+void ofApp::showFileConfig(){   // Showfile screen (load, save, delete and configuration)
     int showCardHeight = 2.5*defCellSize;
     int showCardWidth = 12*defCellSize;
 
@@ -106,18 +196,101 @@ void ofApp::showFileConfig(){
         ofSetLineWidth(2);
         
         if (showsList[i].freshStart == false){  // Showfiles found within the defined directory
+            
             for (int u = 0; u < showFileButtons.size(); u++){
                 string text = showFileButtons[u];
                 fixMain.drawString(text, showCardWidth - defCellSize - (defCellGap/2) - ((u*defCellSize)+defCellGap*u), showCardstartheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize+defCellGap));
                 ofDrawRectangle(showCardWidth - defCellSize - defCellGap - ((u*defCellSize)+defCellGap*u), showCardstartheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize-defCellGap), defCellSize, defCellSize);
-                if (u == 2 && showsList[i].active == false){
+                
+                if (clickLeft(showCardWidth - defCellSize - defCellGap - ((u*defCellSize)+defCellGap*u), showCardstartheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize-defCellGap), defCellSize, defCellSize)){
+                    if (text == "delete"){
+                        showDel = true;
+                        delType = 0;
+                        delData1 = showsList[i].path;
+                        delData2 = showsList[i].name;
+                        
+                    }
+                    
+                    else if (text == "save as"){
+                        strInputHeading = "Save as";
+                        strInputObj.fieldInputState = 1;
+                        strInputObj.maxCount = 32;
+                        strInputObj.current = showsList[i].name + "copy";
+                        strInputObj.textValue = showsList[i].name + "copy";
+                        fieldPtr = &fileSaveAsName;
+                        fileSaveAsPath = showsList[i].path;
+                        
+                    } else if (text == "save") {
+                        genShowFileDir();
+                        ofstream out(showFilesDir + "/" + showsList[i].name + ".luct" , fstream::out | fstream::trunc);
+                        if (out.is_open()){
+                            genShowFileStr();
+                            out << ocol;
+                            out.flush();
+                            out.close(); // Closes file
+                            showsList[i].freshStart = false;
+                        } else {
+                            cout << "Error with file" << endl;
+                        }
+                    } else if (text == "load"){
+                        string line;
+                        fstream myfile;
+                        myfile.open(showsList[i].path, fstream::in);
+                        while (getline(myfile, line)){
+                            showFileData = line;
+                        }
+                        myfile.close();
+                        
+                        for (int u = 0; u < showsList.size(); u++){
+                            if (showsList[u].active == true){
+                                showsList[u].active = false;
+                            }
+                        }
+                        if (showFileData != ""){
+                            showsList[i].active = true;
+                            panels = {};
+                            fixtures = {};
+                            
+                        }
+                        
+                    }
+                    
+                }
+                
+                if (strInputObj.fieldInputState == 3){
+                    genShowFileDir();
+//                    cout << "O PATH: " << fileSaveAsPath << endl;
+//                    cout << "N PATH:" << showFilesDir << "/" << fileSaveAsName << ".luct" << endl;
+//                    cout << "NAME: " << fileSaveAsName << endl;
+                    
+                    if (fileSaveAsPath != ""){  // Check saving as file has a path (could be a new file not yet saved?)
+                        ofFile fileToRead(ofToDataPath(fileSaveAsPath)); // a file that exists
+                            fileToRead.copyTo(showFilesDir + "/" + fileSaveAsName + ".luct");   // Causing Errors yet works [BugLog FS01]
+                    } else {    // If file does not have a path, save as a new file
+                        genShowFileDir();
+                        ofstream out(showFilesDir + "/" + fileSaveAsName + ".luct", fstream::out | fstream::trunc);
+                        if (out.is_open()){
+                            genShowFileStr();
+                            out << ocol;
+                            out.flush();
+                            out.close(); // Closes file
+                        } else {
+                            cout << "Error with file" << endl;
+                        }
+                    }
+                    
+                }
+                
+                if (u == 2 && showsList[i].active == false){    // Don't show Save button unless showfile is active
                     u++;
                 }
             }
         } else {    // Fresh default showfile
+        
             fixMain.drawString("save", showCardWidth - defCellSize - (defCellGap/2) - ((0*defCellSize)+defCellGap*0), showCardstartheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize+defCellGap));
             ofDrawRectangle(showCardWidth - defCellSize - defCellGap - ((0*defCellSize)+defCellGap*0), showCardstartheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize-defCellGap), defCellSize, defCellSize);
             if (clickLeft(showCardWidth - defCellSize - defCellGap - ((0*defCellSize)+defCellGap*0), showCardstartheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize-defCellGap), defCellSize, defCellSize) && level == 0){
+               
                 strInputHeading = "Save";
                 strInputObj.fieldInputState = 1;
                 strInputObj.maxCount = 32;
@@ -128,6 +301,7 @@ void ofApp::showFileConfig(){
             if (strInputObj.fieldInputState == 3){
                 genShowFileDir();
                 ofstream out(showFilesDir + "/" + showsList[i].name + ".luct", fstream::out | fstream::trunc);
+                currentShowName = showsList[i].name;
                 if (out.is_open()){
                     genShowFileStr();
                     out << ocol;
@@ -163,6 +337,7 @@ void ofApp::showFileConfig(){
     if (overlay == 0){
         if (clickLeft(ofGetWidth()-defCellGap-defCellSize, defCellGap, defCellSize, defCellSize)){
             screen = 0;
+            lastInteraction = ofGetElapsedTimeMillis();
         }
     }
     
@@ -189,7 +364,7 @@ void ofApp::showFileConfig(){
         ofSetLineWidth(2);
         ofNoFill();
         ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2), defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2, 5);   // UP button
-        if (clickLeft(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2), defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2) && ofGetElapsedTimeMillis() > lastInteraction + defWaitTime){
+        if (clickLeft(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2), defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2) && ofGetElapsedTimeMillis() > lastInteraction + defWaitTime && overlay == 0){
             lastInteraction = ofGetElapsedTimeMillis();
             showCardstartheight = showCardstartheight + defCellSize;
         }
@@ -207,7 +382,7 @@ void ofApp::showFileConfig(){
         ofSetLineWidth(2);
         ofNoFill();
         ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2) + (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2 + defCellGap, defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2, 5);  // DOWN button
-        if (clickLeft(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2) + (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2 + defCellGap, defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2) && ofGetElapsedTimeMillis() > lastInteraction + defWaitTime){
+        if (clickLeft(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2) + (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2 + defCellGap, defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2) && ofGetElapsedTimeMillis() > lastInteraction + defWaitTime && overlay == 0){
             lastInteraction = ofGetElapsedTimeMillis();
             showCardstartheight = showCardstartheight - defCellSize;
         }
@@ -216,8 +391,6 @@ void ofApp::showFileConfig(){
     ofSetColor(255);
     fixText.drawString("up", defCellGap*2+showCardWidth+((defCellSize/2)/2), 3*defCellSize+(defCellGap*2) + ((ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2)/2);
     fixText.drawString("dn", defCellGap*2+showCardWidth+((defCellSize/2)/2), 3*defCellSize+(defCellGap*2) + ((ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2)/2 + ((ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2 + defCellGap));
-    
-    
     
 }
 
@@ -487,13 +660,20 @@ void ofApp::controlPanel(int i){    // function responsible for drawing the cont
                                 screen = 1;
                                 mode = "";
                                 
-                                if (showsList[0].freshStart == true){
-                                    showsList = {};
-                                    showsList.push_back(showFileObject);
-                                    showsList[0].name = ofGetTimestampString("Temp ShowFile %F %R");
+                                if (showsList[0].active == true){
+                                    if (showsList[0].freshStart == true){
+                                        showsList = {};
+                                        showsList.push_back(showFileObject);
+                                        showsList[0].name = ofGetTimestampString("(New) ShowFile %F %R");
+                                        showsList[0].freshStart = true;
+                                    } else {
+                                        showsList = {};
+                                        showsList.push_back(showFileObject);
+                                        showsList[0].name = currentShowName;
+                                    }
                                     showsList[0].modified = "-";
-                                    showsList[0].freshStart = true;
                                     showsList[0].active = true;
+                                
                                 } else {
                                     showsList = {};
                                 }
@@ -506,21 +686,24 @@ void ofApp::controlPanel(int i){    // function responsible for drawing the cont
                                 
                                 
                                 for (int i = 0; i < dir.size(); i++){
-                                    showsList.push_back(showFileObject);
-                                    showsList[showsList.size()-1].name = dir.getName(i);
-                                    showsList[showsList.size()-1].freshStart = false;
-                                    showsList[showsList.size()-1].active = false;
-                                    //long number = boost::filesystem::last_write_time(dir.getPath(i));
-                                    showsList[showsList.size()-1].modified = "-";
-                                    //cout << gmtime(number) << endl;
-                                // to_string(boost::filesystem::last_write_time(dir.getPath(i)));
-                                // std::asctime(std::localtime(&result))
+                                    if (dir.getName(i) != currentShowName + ".luct"){   // If user saves a fresh show it stops the showfile being listed as it is found in the directory (on next directory listing)
+                                        showsList.push_back(showFileObject);
+                                        string theName;
+                                        for (int u = 0; u < dir.getName(i).size() - 5; u++){    //  removes the ".luct" file extention from the name
+                                            theName = theName + dir.getName(i)[u];
+                                        }
+                                        showsList[showsList.size()-1].name = theName;
+                                        showsList[showsList.size()-1].freshStart = false;
+                                        showsList[showsList.size()-1].active = false;
+                                        showsList[showsList.size()-1].path = dir.getPath(i);
+                                        //long number = boost::filesystem::last_write_time(dir.getPath(i));
+                                        showsList[showsList.size()-1].modified = "-";
+                                        //cout << gmtime(number) << endl;
+                                    // to_string(boost::filesystem::last_write_time(dir.getPath(i)));
+                                    // std::asctime(std::localtime(&result))
+                                    }
                                 }
-                                
-                                
-                                
-                                
-                                
+                               
                             }
                             if (cpActions[indexAction] == "panels"){
                                 addPanelStage = 1;
@@ -1300,6 +1483,7 @@ void ofApp::loadIconsFonts(){
     usrInput.load("Lato-Regular.ttf", 30);
     fixText.load("Lato-Regular.ttf", 7);
     uiIcons.load("LibraSans-Bold.ttf", 20);
+    overlayBody.load("Lato-Regular.ttf", 20);
     
     // icons / images
     colorsIcon.load("panel_icons/colors.png");
@@ -1570,6 +1754,10 @@ void ofApp::draw(){
         if (strInputObj.fieldInputState == 1){
             strInput("#", strInputObj.maxCount);
         }
+    }
+    
+    if (showDel){
+        delOverlay();
     }
 
 

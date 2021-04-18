@@ -70,16 +70,19 @@ class ofApp : public ofBaseApp{
  
     vector<string> showFileButtons = {"delete", "save as", "load", "save"};
     
-    
+    string showFileData;
     
     void showFileConfig();
     int currentShow = 0;    // Determines if current show is 0 = freshly made (not saved), 1 = loaded from showFile
-    
+    string currentShowName;
     
     string * fieldPtr;
     string showFilesDir = ofFilePath::getUserHomeDir() + "/Documents/Lucent Showfiles";
     
+    string fileSaveAsName;
+    string fileSaveAsPath;
     void genShowFileStr(); // Generates showfile data as a string
+    
     
     //mouse variables
     int red = 255;
@@ -93,6 +96,12 @@ class ofApp : public ofBaseApp{
     
     int overlay = 0; // 0 no overlay, 1 fieldInput
     string mode = "";
+    
+    bool showDel = false;
+    int delType;    // Overlay that prompts user upon deleting things. type: 0 = file
+    string delData1;    // If used for file: data1 represents file path data2 represents file name
+    string delData2;
+    void delOverlay();
     
     int lastInteraction;
     int defWaitTime = 100; // time to wait after user finishes an action before calling the code inside a mouse related function (time in millis)
@@ -171,6 +180,7 @@ class ofApp : public ofBaseApp{
     ofTrueTypeFont panelType;
     ofTrueTypeFont usrInput;
     ofTrueTypeFont uiIcons;
+    ofTrueTypeFont overlayBody;
     ofImage colorsIcon;
     
 
@@ -225,6 +235,7 @@ class showFileFile{
 public:
     string name = "";
     string modified = "";
+    string path = "";
     bool freshStart = false;    // New showscreen on program start
     bool active = false;
 };

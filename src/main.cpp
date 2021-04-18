@@ -19,6 +19,8 @@ int main( ){
  * Occasionally run into a "OUT OF MEMORY" error causing program to crash.
    System restart has proven to be a fix for the meanwhile
  
+ * Search for comment "FS01" - causing errors in console yet functions as I want.
+ 
  
  */
 
@@ -43,9 +45,9 @@ int main( ){
 /*
  To do:
  
- * add "last modified" functionality to showfiles (probably involves epoch --> mac (unix) and windows epoch the same????
+ * check if fixture definition is used in showfile upon deletion
  
- * add verticle scroll bar for displaying found show files by checking the bottom coordinate of the last rectangle and see if it's greater > ofGetHeight()
+ * add "last modified" functionality to showfiles (probably involves epoch --> mac (unix) and windows epoch the same????
  
  * add error screen popup if program fails to generate default Lucent directory
  
