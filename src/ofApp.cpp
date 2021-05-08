@@ -11,6 +11,10 @@ vector<panelClass> panels;  //stores panel object
 panelClass panelObj;
 vector<dmxFixtureclass> fixtures;   //stores all dmxFixture objects
 dmxFixtureclass fixObj;
+
+vector<dmxPatchclass> dmxPatch;
+dmxPatchclass dmxPatchObj;
+
 fixColor colorObj;
 storedBright brightObj;
 storedPos posObj;
@@ -25,9 +29,11 @@ knownPanel knownPanelObj;
 
 strInputvalues strInputObj;
 
+
 string ocol = ""; // Represents showfile data as a string
 
 int showCardstartheight;
+int showPatchstartheight;
 
 int ofApp::gX(int x){ //function to generate X coords for element on grid
     return (x * defCellSize)+defCellGap;
@@ -41,6 +47,36 @@ bool ofApp::waitTime(int time){
     if (ofGetElapsedTimeMillis() > lastInteraction + time){
         return true;
     }
+}
+
+
+
+void ofApp::blockFeature(){
+    level = 3;
+    overlay = 1;
+    ofSetColor(0, 0, 0,220);
+    ofFill();
+    ofDrawRectangle(0,0,ofGetWindowWidth(), ofGetWindowHeight());
+    int headerHeight = defCellGap*3;
+    int width = 7*defCellSize;
+    int height = 4*defCellSize;
+    
+    ofSetColor(80, 80, 80);
+    ofDrawRectRounded(ofGetWidth()/2-width/2, ofGetHeight()/2-height/2, width, height, defRounded);  // overlay body
+    ofSetColor(235, 64, 52);
+    ofRectangle header; // Define header variables
+    header.x = ofGetWidth()/2-width/2;
+    header.y = ofGetHeight()/2-height/2;
+    header.width = width;
+    header.height = headerHeight;
+    ofDrawRectRounded(header, 5,5,0,0); // draw header
+    ofNoFill();
+    ofSetLineWidth(2);
+    ofDrawRectRounded(ofGetWidth()/2-width/2, ofGetHeight()/2-height/2, width, height, defRounded);  // overlay body
+    
+    ofSetColor(255);
+    panelType.drawString("WARNING", ofGetWidth()/2-(defCellSize), ofGetHeight()/2-height/2 + defCellGap*2);
+    overlayBody.drawString(blockMsg, ofGetWidth()/2-(width/2)+defCellGap, ofGetHeight()/2-height/2 + defCellGap*6);
 }
 
 void ofApp::genShowFileDir(){
@@ -58,28 +94,164 @@ void ofApp::genShowFileDir(){
     } else {
         cout << "lucentShowFiles already exists" << endl;
     }
-    
-    
-    
 }
+
+vector<vector<vector<string>>> newPanels {{{}}};    // each index represents a panel object with its attributes as the child
+string output;
+
+
+int ofApp::intParseAttribute(int panelID, int attriID){  //  responcible for parsing interger attribute values from showData string
+    vector<string> allChars;    // Stores the characters of each value.. this is required as a integer was converted to a string and will need to have each character converted back again. e.g: number 24 = 50, 52 (ascii codes)
+    output = "";
+    for (int a = 0; a < newPanels[panelID][attriID].size(); a++){
+        //cout << "SIZE: " << to_string(newPanels[panelID][attriID].size()) << endl;
+         allChars.push_back(newPanels[panelID][attriID][a]);
+    }
+    output = "";
+    for (int l = 0; l < allChars.size(); l++){
+        output = output + char(stoi(allChars[l]));
+    }
+    //cout << "OUT " << output << endl;
+    
+    if (output != "*"){
+        return(stoi(output));
+    }
+}
+
+string ofApp::strParseAttribute(int panelID, int attriID){  //  responcible for parsing interger attribute values from showData string
+    vector<string> allChars;    // Stores the characters of each value.. this is required as a integer was converted to a string and will need to have each character converted back again. e.g: number 24 = 50, 52 (ascii codes)
+    output = "";
+    for (int a = 0; a < newPanels[panelID][attriID].size(); a++){
+        //cout << "SIZE: " << to_string(newPanels[panelID][attriID].size()) << endl;
+         allChars.push_back(newPanels[panelID][attriID][a]);
+    }
+    output = "";
+    for (int l = 0; l < allChars.size(); l++){
+        output = output + char(stoi(allChars[l]));
+    }
+    //cout << "OUT " << output << endl;
+    
+    if (output != "*"){
+        return(output);
+    }
+}
+
+vector<int> ofApp::vectParseAttribute(int panelID, int attriID){  //  responcible for parsing interger attribute values from showData string
+    vector<string> allChars;    // Stores the characters of each value.. this is required as a integer was converted to a string and will need to have each character converted back again. e.g: number 24 = 50, 52 (ascii codes)
+    vector<int> returnV = {};
+    output = "";
+    string indexItem;
+    for (int a = 0; a < newPanels[panelID][attriID].size(); a++){
+        cout << "SIZE: " << to_string(newPanels[panelID][attriID].size()) << endl;
+         allChars.push_back(newPanels[panelID][attriID][a]);
+    }
+    
+    output = "";
+    for (int l = 0; l < allChars.size(); l++){
+        if (allChars[l] != "/"){
+            indexItem = indexItem + allChars[l];
+            
+        } else {
+            cout << "NEW ITEM" << endl;
+            if (indexItem != ""){
+                returnV.push_back(stoi(indexItem));
+                indexItem = "";
+            }
+        }
+        
+    }
+    
+    cout << "OUT VECT: " << output << endl;
+
+    if (returnV.size()>0){
+        return(returnV);
+    }
+}
+
+
+vector<storedBright> vectBriParseAttribute(int panelID, int attriID){  //  responcible for parsing interger attribute values from showData string
+    vector<string> allChars;    // Stores the characters of each value.. this is required as a integer was converted to a string and will need to have each character converted back again. e.g: number 24 = 50, 52 (ascii codes)
+    vector<int> tempArray = {};
+    vector<storedBright> returnV = {};
+    output = "";
+    string indexItem;
+    for (int a = 0; a < newPanels[panelID][attriID].size(); a++){
+        cout << "SIZE: " << to_string(newPanels[panelID][attriID].size()) << endl;
+         allChars.push_back(newPanels[panelID][attriID][a]);
+    }
+    
+    output = "";
+    for (int l = 0; l < allChars.size(); l++){
+        if (allChars[l] != "/"){
+            indexItem = indexItem + allChars[l];
+            
+        } else {
+            cout << "NEW ITEM" << endl;
+            if (indexItem != ""){
+                tempArray.push_back(stoi(indexItem));
+                indexItem = "";
+            }
+        }
+    }
+    
+    if (tempArray.size() > 0){
+        for (int j = 0; j < tempArray.size(); j+3){
+            returnV.push_back(brightObj);
+            returnV[returnV.size()-1].iden = tempArray[j];
+            returnV[returnV.size()-1].set = tempArray[j+1];
+            returnV[returnV.size()-1].value = tempArray[2];
+            
+        }
+    }
+    
+    //cout << "OUT VECT: " << output << endl;
+
+    if (tempArray.size()>0){
+        return(returnV);
+    }
+}
+
 
 void ofApp::strInput(string current, int max){
     level = 3;
     overlay = 1;
     maxCharacterCount = max;
-    ofSetColor(0, 0, 0,220);
-    ofFill();
-    ofDrawRectangle(0,0,ofGetWindowWidth(), ofGetWindowHeight());
-    ofSetColor(171, 122, 50);
-    ofDrawRectRounded(ofGetWindowWidth()/2-(defCellSize*5),ofGetWindowHeight()/2-(defCellSize/2),defCellSize*10, defCellSize,5);
-    ofSetColor(255, 255, 255);
-    ofSetLineWidth(2);
-    ofNoFill();
+    
+//    if (strInputObj.screenType == 0){
+        ofSetColor(0, 0, 0,220);
+        ofFill();
+        ofDrawRectangle(0,0,ofGetWindowWidth(), ofGetWindowHeight());
+        ofSetColor(171, 122, 50);
+        ofDrawRectRounded(ofGetWindowWidth()/2-(defCellSize*5),ofGetWindowHeight()/2-(defCellSize/2),defCellSize*10, defCellSize,defRounded);
+        ofSetColor(255, 255, 255);
+        ofSetLineWidth(2);
+        ofNoFill();
+        usrInput.drawString(strInputObj.textValue, ofGetWindowWidth()/2-(defCellSize*5) + defCellGap, ofGetWindowHeight()/2-(defCellSize/2) + (defCellGap * 3 + 5));
+        panelName.drawString(to_string(strInputObj.textValue.size()) + " / " + to_string(max), ofGetWindowWidth()/2-(defCellSize*5), ofGetWindowHeight()/2+(defCellSize/2)+defCellGap);
+        pageMain.drawString(strInputHeading, ofGetWindowWidth()/2-(defCellSize*5), ofGetWindowHeight()/2-(defCellSize/2)-defCellGap);
+        
+        ofNoFill();
+        ofSetColor(255, 0, 0);    // draw "cross" exit button
+        ofSetLineWidth(2);
+        ofDrawRectangle(ofGetWindowWidth()/2+(defCellSize*4), ofGetWindowHeight()/2-(defCellSize/2)-defCellGap-defCellSize, defCellSize, defCellSize);
+        ofSetLineWidth(5);
+        ofDrawLine(ofGetWindowWidth()/2+(defCellSize*4)+defCellGap, ofGetWindowHeight()/2-(defCellSize/2)-defCellGap-defCellSize+defCellGap, ofGetWindowWidth()/2+(defCellSize*4)+defCellGap+defCellSize-defCellGap*2, ofGetWindowHeight()/2-(defCellSize/2)-defCellGap*2);
+        ofDrawLine(ofGetWindowWidth()/2+(defCellSize*4)+defCellGap, ofGetWindowHeight()/2-(defCellSize/2)-defCellGap-defCellSize+defCellSize-defCellGap, ofGetWindowWidth()/2+(defCellSize*4)+defCellGap+defCellSize-defCellGap*2, ofGetWindowHeight()/2-(defCellSize/2)-defCellSize);
+    
+        if (clickLeft(ofGetWindowWidth()/2+(defCellSize*4), ofGetWindowHeight()/2-(defCellSize/2)-defCellGap-defCellSize, defCellSize, defCellSize)){
+            strInputObj.fieldInputState = 0;
+            overlay = 0;
+            mode = "";
+            lastInteraction = ofGetElapsedTimeMillis();
 
-    usrInput.drawString(strInputObj.textValue, ofGetWindowWidth()/2-(defCellSize*5) + defCellGap, ofGetWindowHeight()/2-(defCellSize/2) + (defCellGap * 3 + 5));
-    panelName.drawString(to_string(strInputObj.textValue.size()) + " / " + to_string(max), ofGetWindowWidth()/2-(defCellSize*5), ofGetWindowHeight()/2+(defCellSize/2)+defCellGap);
-    pageMain.drawString(strInputHeading, ofGetWindowWidth()/2-(defCellSize*5), ofGetWindowHeight()/2-(defCellSize/2)-defCellGap);
+    }
+    
+//    } else if (strInputObj.screenType == 1) {
+//
+//    }
 }
+
+
 
 void ofApp::delOverlay(){
     level = 3;
@@ -95,7 +267,7 @@ void ofApp::delOverlay(){
     int buttonHeight = defCellSize;
     
     ofSetColor(80, 80, 80);
-    ofDrawRectRounded(ofGetWidth()/2-width/2, ofGetHeight()/2-height/2, width, height, 5);  // overlay body
+    ofDrawRectRounded(ofGetWidth()/2-width/2, ofGetHeight()/2-height/2, width, height,defRounded);  // overlay body
     ofSetColor(235, 64, 52);
     ofRectangle header; // Define header variables
     header.x = ofGetWidth()/2-width/2;
@@ -105,7 +277,7 @@ void ofApp::delOverlay(){
     ofDrawRectRounded(header, 5,5,0,0); // draw header
     ofNoFill();
     ofSetLineWidth(2);
-    ofDrawRectRounded(ofGetWidth()/2-width/2, ofGetHeight()/2-height/2, width, height, 5);  // overlay body
+    ofDrawRectRounded(ofGetWidth()/2-width/2, ofGetHeight()/2-height/2, width, height, defRounded);  // overlay body
     
     ofSetColor(255);
     panelType.drawString("DELETE/REMOVE", ofGetWidth()/2-(defCellSize), ofGetHeight()/2-height/2 + defCellGap*2);
@@ -113,7 +285,7 @@ void ofApp::delOverlay(){
     
     // YES button
     ofSetColor(235, 64, 52);
-    ofDrawRectRounded(ofGetWidth()/2 - defCellGap - buttonWidth, ofGetHeight()/2+height/2 - defCellGap - buttonHeight, buttonWidth, buttonHeight, 5);
+    ofDrawRectRounded(ofGetWidth()/2 - defCellGap - buttonWidth, ofGetHeight()/2+height/2 - defCellGap - buttonHeight, buttonWidth, buttonHeight, defRounded);
     if (clickLeft(ofGetWidth()/2 - defCellGap - buttonWidth, ofGetHeight()/2+height/2 - defCellGap - buttonHeight, buttonWidth, buttonHeight)){
         overlay = 0;
         ofDirectory::removeDirectory(delData1, true, false);
@@ -139,7 +311,7 @@ void ofApp::delOverlay(){
             showsList[showsList.size()-1].freshStart = showsListAlt[i].freshStart;
             showsList[showsList.size()-1].active = showsListAlt[i].active;
         }
-        cout << showsList.size() << endl;
+        //cout << showsList.size() << endl;
       
         delData1 = "";
         delData2 = "";
@@ -151,7 +323,7 @@ void ofApp::delOverlay(){
     
     // NO button
     ofSetColor(255);
-    ofDrawRectRounded(ofGetWidth()/2 + defCellGap, ofGetHeight()/2+height/2 - defCellGap - buttonHeight, buttonWidth, buttonHeight, 5);
+    ofDrawRectRounded(ofGetWidth()/2 + defCellGap, ofGetHeight()/2+height/2 - defCellGap - buttonHeight, buttonWidth, buttonHeight, defRounded);
     if (clickLeft(ofGetWidth()/2 + defCellGap, ofGetHeight()/2+height/2 - defCellGap - buttonHeight, buttonWidth, buttonHeight)){
         showDel = false;
         delData1 = "";
@@ -167,10 +339,262 @@ void ofApp::delOverlay(){
     
 }
 
+void ofApp::miniButton(int x, int y, string cha){
+    ofFill();
+    ofSetColor(80,80,80);
+    ofDrawRectangle(x,y,defCellSize/2, defCellSize/2);
+    ofNoFill();
+    ofSetLineWidth(2);
+    ofSetColor(252, 186, 3);
+    ofDrawRectangle(x,y,defCellSize/2, defCellSize/2);
+    ofSetColor(255);
+    fixMain.drawString(cha, x+defCellGap*0.8, y+defCellGap*1.6);
+}
+
+void ofApp::fixtureConfig(){   // Showfile screen (load, save, delete and configuration)
+    int showPatchHeight = defCellSize/2;
+    int showPatchWidth = 8*defCellSize+defCellGap;
+    
+
+    ofFill();
+    
+    for (int i = 0; i < dmxPatch.size(); i++){  // for the amount of patches
+        ofSetColor(30, 30, 30);
+        ofFill();
+        ofDrawRectangle(0, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), showPatchWidth, showPatchHeight);
+        int patchPassScore; // if pass score reaches 4 then the patch may be verified and used in contribution to DMX channel output
+        
+        ofFill();
+        
+//        if (dmxPatch[i].fixtureID != 1){  // needs work
+//            ofSetColor(92, 19, 19);
+//            ofDrawRectangle(defCellGap+defCellSize, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), defCellSize*2, showPatchHeight);
+//        } else {
+//            patchPassScore++;
+//        }
+        
+        if (dmxPatch[i].universe != 1){
+            ofSetColor(92, 19, 19);
+            ofDrawRectangle(defCellGap+defCellSize*2, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), defCellSize*2, showPatchHeight);
+        } else {
+            patchPassScore++;
+        }
+        
+        if (dmxPatch[i].channel < 1 || dmxPatch[i].channel > 512){
+            ofSetColor(92, 19, 19);
+            ofDrawRectangle(defCellGap+defCellSize*4, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), defCellSize*2, showPatchHeight);
+        } else {
+            patchPassScore++;
+        }
+        
+        if (dmxPatch[i].quantity < 1 || dmxPatch[i].quantity > 512){
+            ofSetColor(92, 19, 19);
+            ofDrawRectangle(defCellGap+defCellSize*6, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), defCellSize*2, showPatchHeight);
+        } else {
+            patchPassScore++;
+        }
+        
+        if (patchSelect != NULL){
+            if (patchSelect == &dmxPatch[i].fixtureID){
+                if (flashOn == true){
+                    ofSetLineWidth(0);
+                    ofFill();
+                    ofSetColor(171, 122, 50);
+                    ofDrawRectangle(defCellGap, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), defCellSize*2, showPatchHeight);   // Beige flash
+                }
+                ofSetColor(66, 132, 245);
+                ofSetLineWidth(4);
+                ofNoFill();
+                ofDrawRectangle(defCellGap, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), defCellSize*2, showPatchHeight);   // Selected blue boarder
+
+            } else if (patchSelect == &dmxPatch[i].universe){
+                if (flashOn == true){
+                    ofSetLineWidth(0);
+                    ofFill();
+                    ofSetColor(171, 122, 50);
+                    ofDrawRectangle(defCellGap+defCellSize*2, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), defCellSize*2, showPatchHeight);   // Beige flash
+                }
+                ofSetColor(66, 132, 245);
+                ofSetLineWidth(4);
+                ofNoFill();
+                ofDrawRectangle(defCellGap+defCellSize*2, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), defCellSize*2, showPatchHeight);
+            } else if (patchSelect == &dmxPatch[i].channel){
+                if (flashOn == true){
+                    ofSetLineWidth(0);
+                    ofFill();
+                    ofSetColor(171, 122, 50);
+                    ofDrawRectangle(defCellGap+defCellSize*4, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), defCellSize*2, showPatchHeight);   // Beige flash
+                }
+                ofSetColor(66, 132, 245);
+                ofSetLineWidth(4);
+                ofNoFill();
+                ofDrawRectangle(defCellGap+defCellSize*4, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), defCellSize*2, showPatchHeight);
+            } else if (patchSelect == &dmxPatch[i].quantity){
+                if (flashOn == true){
+                    ofSetLineWidth(0);
+                    ofFill();
+                    ofSetColor(171, 122, 50);
+                    ofDrawRectangle(defCellGap+defCellSize*6, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), defCellSize*2, showPatchHeight);   // Beige flash
+                }
+                ofSetColor(66, 132, 245);
+                ofSetLineWidth(4);
+                ofNoFill();
+                ofDrawRectangle(defCellGap+defCellSize*6, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), defCellSize*2, showPatchHeight);
+            }
+            ofSetLineWidth(1);
+            ofSetColor(30, 30, 30);
+            
+            if (ofGetElapsedTimeMillis() > lastFlash + defFlashTime){
+                if (flashOn == false){
+                    
+                    flashOn = true;
+                } else {
+                    flashOn = false;
+                }
+                lastFlash = ofGetElapsedTimeMillis();
+            }
+        }
+        
+        ofFill();
+
+        ofSetColor(255);
+        fixMain.drawString(to_string(dmxPatch[i].fixtureID), defCellGap*2+defCellSize*0.7, showPatchstartheight+(i*showPatchHeight)+defCellGap*2.8+(3*defCellSize));
+        fixMain.drawString(to_string(dmxPatch[i].universe), defCellGap*2+defCellSize*0.7+defCellSize*2, showPatchstartheight+(i*showPatchHeight)+defCellGap*2.8+(3*defCellSize));
+        if (clickLeft(defCellGap, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), defCellSize*2, showPatchHeight)){
+            patchSelect = &dmxPatch[i].fixtureID;
+            strInputHeading = "fixtureID";
+            strInputObj.fieldInputState = 1;
+            strInputObj.screenType = 1;
+            strInputObj.current = to_string(dmxPatch[i].fixtureID);
+            strInputObj.maxCount = 3;
+            strInputObj.textValue = to_string(dmxPatch[i].fixtureID);
+            ptrType = 1;
+            fieldPtrInt = &dmxPatch[i].fixtureID;
+            lastFlash = ofGetElapsedTimeMillis();
+        } else if (clickLeft(defCellGap+defCellSize*2, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), defCellSize*2, showPatchHeight)){
+            patchSelect = &dmxPatch[i].universe;
+            strInputHeading = "universe";
+            strInputObj.fieldInputState = 1;
+            strInputObj.screenType = 1;
+            strInputObj.current = to_string(dmxPatch[i].universe);
+            strInputObj.maxCount = 3;
+            strInputObj.textValue = to_string(dmxPatch[i].universe);
+            ptrType = 1;
+            fieldPtrInt = &dmxPatch[i].universe;
+            lastFlash = ofGetElapsedTimeMillis();
+        } else if (clickLeft(defCellGap+defCellSize*4, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), defCellSize*2, showPatchHeight)){
+            patchSelect = &dmxPatch[i].channel;
+            strInputHeading = "channel";
+            strInputObj.fieldInputState = 1;
+            strInputObj.screenType = 1;
+            strInputObj.current = to_string(dmxPatch[i].channel);
+            strInputObj.maxCount = 3;
+            strInputObj.textValue = to_string(dmxPatch[i].channel);
+            ptrType = 1;
+            fieldPtrInt = &dmxPatch[i].channel;
+            lastFlash = ofGetElapsedTimeMillis();
+        } else if (clickLeft(defCellGap+defCellSize*6, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), defCellSize*2, showPatchHeight)){
+            patchSelect = &dmxPatch[i].quantity;
+            strInputHeading = "quantity";
+            strInputObj.fieldInputState = 1;
+            strInputObj.screenType = 1;
+            strInputObj.current = to_string(dmxPatch[i].quantity);
+            strInputObj.maxCount = 3;
+            strInputObj.textValue = to_string(dmxPatch[i].quantity);
+            ptrType = 1;
+            fieldPtrInt = &dmxPatch[i].quantity;
+            lastFlash = ofGetElapsedTimeMillis();
+        }
+        fixMain.drawString(to_string(dmxPatch[i].channel), defCellGap*2+defCellSize*0.7+defCellSize*4, showPatchstartheight+(i*showPatchHeight)+defCellGap*2.8+(3*defCellSize));
+        fixMain.drawString(to_string(dmxPatch[i].quantity), defCellGap*2+defCellSize*0.7+defCellSize*6, showPatchstartheight+(i*showPatchHeight)+defCellGap*2.8+(3*defCellSize));
+        
+        if (patchPassScore == 4){
+            ofSetColor(80, 255, 80);
+            dmxPatch[i].verified = true;
+        } else {
+            ofSetColor(255, 80, 80);
+        }
+        
+        ofDrawRectangle(0, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), defCellGap, showPatchHeight);
+        ofSetColor(80, 80, 80);
+        ofDrawLine(defCellGap+defCellSize*2, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), defCellGap+defCellSize*2, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize)+showPatchHeight);
+        ofDrawLine(defCellGap+defCellSize*4, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), defCellGap+defCellSize*4, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize)+showPatchHeight);
+        ofDrawLine(defCellGap+defCellSize*6, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize), defCellGap+defCellSize*6, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize)+showPatchHeight);
+        ofSetLineWidth(1);
+        ofDrawLine(0, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize)+showPatchHeight, showPatchWidth, showPatchstartheight+(i*showPatchHeight)+defCellGap+(3*defCellSize)+showPatchHeight);
+        
+        ofSetColor(30, 30, 30);
+    }
+    
+    
+    
+    if (mouseY < defCellGap + defCellSize*3){
+        level = 1;
+    }
+
+    ofFill();
+    ofSetColor(80, 80, 80);
+    ofDrawRectangle(0, 0, ofGetWidth(), defCellGap + defCellSize*3);
+    
+    ofNoFill();
+    ofSetColor(255);
+    ofSetLineWidth(2);
+    ofSetColor(255);
+    pageMain.drawString("Fixtures & Patching", 25, 75);
+    pageSub.drawString("Edit definitions and patch to DMX channels", 25, 125);
+    ofDrawLine(0, defCellSize*2.5, ofGetWidth(), defCellSize*2.5);
+    fixMain.drawString("FixtureID", defCellGap*2, defCellSize*3);
+    ofDrawLine(defCellSize*2+defCellGap, defCellSize*2.5, defCellSize*2+defCellGap, defCellSize*3+defCellGap);
+    fixMain.drawString("Universe", defCellGap*3+defCellSize*2, defCellSize*3);
+    ofDrawLine(defCellSize*4+defCellGap, defCellSize*2.5, defCellSize*4+defCellGap, defCellSize*3+defCellGap);
+    fixMain.drawString("Channel", defCellGap*3+defCellSize*4, defCellSize*3);
+    ofDrawLine(defCellSize*6+defCellGap, defCellSize*2.5, defCellSize*6+defCellGap, defCellSize*3+defCellGap);
+    fixMain.drawString("Quantity", defCellGap*3+defCellSize*6, defCellSize*3);
+    ofDrawLine(defCellSize*8+defCellGap, defCellSize*2.5, defCellSize*8+defCellGap, defCellSize*3+defCellGap);
+    //fixMain.drawString("Modified", defCellGap*2 + (defCellSize*10), defCellSize*3);
+    
+    //miniButton(defCellGap*2 + defCellSize*2, defCellSize*3-defCellGap*2, "+");  // ADD patch
+    //miniButton(defCellGap*2 + defCellSize*2+defCellGap+ defCellSize/2, defCellSize*3-defCellGap*2, "-");    // Remove patch
+    
+    
+    
+    ofFill();
+    ofSetColor(180, 80, 80);    // draw "cross" exit button
+    ofSetLineWidth(0);
+    ofDrawRectangle(ofGetWidth()-defCellGap-defCellSize, defCellGap, defCellSize, defCellSize);
+    ofSetColor(80,80,80);
+    ofSetLineWidth(5);
+    ofDrawLine(ofGetWidth()-defCellSize, defCellGap*2, ofGetWidth()-(defCellGap*2), defCellSize);
+    ofDrawLine(ofGetWidth()-defCellSize, defCellSize, ofGetWidth()-(defCellGap*2), defCellGap*2);
+    if (overlay == 0){
+        if (clickLeft(ofGetWidth()-defCellGap-defCellSize, defCellGap, defCellSize, defCellSize)){
+            screen = 0;
+            lastInteraction = ofGetElapsedTimeMillis();
+        }
+    }
+    
+    ofSetColor(255, 255, 255,100);  // fixtures button
+    ofSetLineWidth(0);
+    ofDrawRectangle(ofGetWidth()-(defCellGap*2)-(defCellSize*3)-defCellSize, defCellGap, defCellSize*3, defCellSize);
+    
+    ofSetColor(255, 255, 255, 255);
+    ofNoFill();
+    ofSetLineWidth(1);
+    ofDrawRectangle(ofGetWidth()-(defCellGap*2)-(defCellSize*3)-defCellSize, defCellGap, defCellSize*3, defCellSize);
+    panelType.drawString("Showfiles", ofGetWidth()-(defCellGap*2)-(defCellSize*3)-(defCellSize*0.5), defCellGap*4);
+    if (clickLeft(ofGetWidth()-(defCellGap*2)-(defCellSize*3)-defCellSize, defCellGap, defCellSize*3, defCellSize)){
+        screen = 1;
+    }
+
+}
+
+
+
 void ofApp::showFileConfig(){   // Showfile screen (load, save, delete and configuration)
     int showCardHeight = 2.5*defCellSize;
     int showCardWidth = 12*defCellSize;
 
+   
     if (mouseY < defCellGap + defCellSize*3){
         level = 1;
     }
@@ -179,7 +603,7 @@ void ofApp::showFileConfig(){   // Showfile screen (load, save, delete and confi
     for (int i = 0; i < showsList.size(); i++){ // Draw a card for each of the showfiles found
         ofSetLineWidth(1);
         ofSetColor(80, 80, 80);
-        ofDrawRectRounded(defCellGap, showCardstartheight+(i*showCardHeight)+defCellGap+(i*defCellGap), showCardWidth, showCardHeight, 5);
+        ofDrawRectRounded(defCellGap, showCardstartheight+(i*showCardHeight)+defCellGap+(i*defCellGap), showCardWidth, showCardHeight,defRounded);
         ofSetColor(255);
         ofDrawLine(defCellSize*10, showCardstartheight+(i*showCardHeight)+defCellGap+(i*defCellGap), defCellSize*10, showCardstartheight+(i*showCardHeight)+(defCellSize*0.7)+(i*defCellGap));
         cardMain.drawString(showsList[i].name, defCellGap*2, showCardstartheight+(i*showCardHeight)+(defCellGap*3)+(i*defCellGap));
@@ -214,9 +638,11 @@ void ofApp::showFileConfig(){   // Showfile screen (load, save, delete and confi
                     else if (text == "save as"){
                         strInputHeading = "Save as";
                         strInputObj.fieldInputState = 1;
+                        strInputObj.screenType = 0;
                         strInputObj.maxCount = 32;
                         strInputObj.current = showsList[i].name + "copy";
                         strInputObj.textValue = showsList[i].name + "copy";
+                        ptrType = 0;
                         fieldPtr = &fileSaveAsName;
                         fileSaveAsPath = showsList[i].path;
                         
@@ -233,26 +659,159 @@ void ofApp::showFileConfig(){   // Showfile screen (load, save, delete and confi
                             cout << "Error with file" << endl;
                         }
                     } else if (text == "load"){
-                        string line;
-                        fstream myfile;
-                        myfile.open(showsList[i].path, fstream::in);
-                        while (getline(myfile, line)){
-                            showFileData = line;
-                        }
-                        myfile.close();
-                        
-                        for (int u = 0; u < showsList.size(); u++){
-                            if (showsList[u].active == true){
-                                showsList[u].active = false;
-                            }
-                        }
-                        if (showFileData != ""){
-                            showsList[i].active = true;
-                            panels = {};
-                            fixtures = {};
-                            
-                        }
-                        
+                        lastInteraction = ofGetElapsedTimeMillis();
+                        showBlock = true;
+                        blockMsg = "The developer has removed Load\nfunctionality in this build.";
+//                        string line;
+//                        fstream myfile;
+//                        myfile.open(showsList[i].path, fstream::in);
+//                        while (getline(myfile, line)){
+//                            showFileData = line;
+//                        }
+//                        myfile.close();
+//
+//                        for (int u = 0; u < showsList.size(); u++){
+//                            if (showsList[u].active == true){
+//                                showsList[u].active = false;
+//                            }
+//                        }
+//                        if (showFileData != ""){
+//                            currentShowName = showsList[i].name;
+//                            showsList[i].active = true;
+//                            panels = {};
+//                            fixtures = {};
+//
+//
+//
+//                            if (showFileData == ""){
+//                                cout << "Blank File" << endl;
+//
+//                            } else {                                // Parse showfile data
+//                                cout << "parsing" << endl;
+//
+//                                string panelSplit = "^";
+//                                string attributeSplit = "$";
+//
+//                                // ImportedPanels --> Panel object --> panel attributes --> panelAttributePanelData --> dataAttributes
+//
+//                                //vector<vector<vector<string>>> newPanels {{{}}};    // each index represents a panel object with its attributes as the child
+//
+//
+//                                int currentPanel = 0;
+//                                int currentAttribute = 0;   //  storage data found at 9, 10, 11, 12
+//
+//                                for (int c = 0; c < showFileData.size(); c++){   // split panels up into their own vector index --> newPanels[]
+//                                        if (showFileData[c] != '^'){
+//                                            if (showFileData[c] != '$'){
+//                                                newPanels[currentPanel][currentAttribute].push_back(to_string(showFileData[c]));
+//                                            } else {
+//                                                currentAttribute++;
+//                                                newPanels[currentPanel].push_back({});
+//                                            }
+//
+//                                        } else {
+//                                            newPanels.push_back({{}});
+//                                            currentPanel++;
+//                                            currentAttribute = 0;
+//                                        }
+//                                    }
+//
+//                                for (int p = 0; p < newPanels.size()-1; p++){
+//                                    panels.push_back(panelObj);
+//
+//
+//                                    panels[p].x = intParseAttribute(p,0);
+//                                    panels[p].y = intParseAttribute(p,1);
+//                                    panels[p].wi = intParseAttribute(p,2);
+//                                    panels[p].hi = intParseAttribute(p,3);
+//                                    panels[p].r = intParseAttribute(p,4);
+//                                    panels[p].cellSize = intParseAttribute(p,5);
+//                                    panels[p].defSpace = intParseAttribute(p,6);
+//                                    panels[p].type = strParseAttribute(p,7);
+//                                    panels[p].name = strParseAttribute(p,8);
+//
+//                                    int panelID = p;
+//                                    int attriID = 9;
+//
+//                                    vector<int> rawData;
+//                                    string quickPrint;
+//                                    string tempIndex;
+//
+//                                    cout << "crazy" << endl;
+//
+//                                    //cout << newPanels[panelID][attriID] << endl;
+//
+//                                    for (int c = 1; c < newPanels[panelID][attriID].size(); c++){
+//                                        if (stoi(newPanels[panelID][attriID][c]) != 47){    // '/'
+//                                            quickPrint = quickPrint + newPanels[panelID][attriID][c];
+//                                            int asciiInt = stoi(newPanels[panelID][attriID][c]);
+//                                            char theChar = char(asciiInt);
+//                                            cout << "ASCII INT: " << asciiInt << endl;
+//                                            tempIndex.push_back(theChar);
+//
+//                                            //rawData.push_back(stoi(to_string(asciiInt-48)));
+//                                            //rawData[rawData.size()-1]=rawData[rawData.size()-1]*10+asciiInt-48;
+//
+//                                        }
+//                                        else{
+//                                            cout << "NEW SLASH" << endl;
+////                                            rawData.push_back(0);
+//                                            if (tempIndex != ""){
+//                                                rawData.push_back(stoi(tempIndex));
+//
+//                                            }
+//                                            tempIndex = "";
+//                                        }
+//
+//
+//
+//                                    }
+//                                    cout << "THE STRING OUTPUT: " << quickPrint << endl;
+//                                    //out << rawData[0] << endl;
+//
+//
+//                                    //panels[p].savedBrightness = returnV;
+//
+//                                    //cout << "VVVVV: " << to_string(returnV.size()) << endl;
+//
+//                                    //cout << to_string(panels[p].savedBrightness[0].value);
+//                                    //panels[p].fadeData = vectBriParseAttribute(p,9);
+//
+//                                    //vectBriParseAttribute(p,9);
+//
+//
+//                                    //  dodo
+//
+//                                    //cout << "EEEEEEE: "<< panels[0].x << endl;
+//
+//
+//                                }
+//
+//                                vector<string> attriList = {"x", "y", "wi", "hi", "r", "cellSize", "defSpace", "type", "name", "Brightness", "Positions", "Colors", "Faders"};
+//
+//                                // print out each vector index
+//                                for (int i = 0; i < newPanels.size()-1; i++){     // each panel object
+//
+//                                    for (int a = 0; a < newPanels[i].size(); a++){
+//                                        string panelWhole;
+//                                                for (int c = 0; c < newPanels[i][a].size(); c++){
+//                                                    int ascii = stoi(newPanels[i][a][c]);
+//
+//
+//                                                    panelWhole = panelWhole + char(ascii);
+//                                                }
+//                                        cout << attriList[a] << ": " << panelWhole << endl;
+//
+//                                    }
+//                                    cout << "---" << endl;
+//                                }
+//
+//
+//
+//                            }
+//
+//
+//                        }
                     }
                     
                 }
@@ -293,9 +852,11 @@ void ofApp::showFileConfig(){   // Showfile screen (load, save, delete and confi
                
                 strInputHeading = "Save";
                 strInputObj.fieldInputState = 1;
+                strInputObj.screenType = 0;
                 strInputObj.maxCount = 32;
                 strInputObj.current = ofGetTimestampString("ShowFile %F %R");
                 strInputObj.textValue = ofGetTimestampString("ShowFile %F %R");
+                ptrType = 0;
                 fieldPtr = &showsList[i].name;
             }
             if (strInputObj.fieldInputState == 3){
@@ -319,6 +880,7 @@ void ofApp::showFileConfig(){   // Showfile screen (load, save, delete and confi
     ofFill();
     ofSetColor(80, 80, 80);
     ofDrawRectangle(0, 0, ofGetWidth(), defCellGap + defCellSize*3);
+    
     ofSetColor(255, 255, 255);
     pageMain.drawString("Showfiles", 25, 75);
     pageSub.drawString("Save, Delete and configure showfiles", 25, 125);
@@ -344,26 +906,30 @@ void ofApp::showFileConfig(){   // Showfile screen (load, save, delete and confi
     ofSetColor(255, 255, 255,100);  // fixtures button
     ofSetLineWidth(0);
     ofDrawRectangle(ofGetWidth()-(defCellGap*2)-(defCellSize*3)-defCellSize, defCellGap, defCellSize*3, defCellSize);
+    
     ofSetColor(255, 255, 255, 255);
     ofNoFill();
     ofSetLineWidth(1);
     ofDrawRectangle(ofGetWidth()-(defCellGap*2)-(defCellSize*3)-defCellSize, defCellGap, defCellSize*3, defCellSize);
     panelType.drawString("Patching", ofGetWidth()-(defCellGap*2)-(defCellSize*3)-(defCellSize*0.5), defCellGap*4);
+    if (clickLeft(ofGetWidth()-(defCellGap*2)-(defCellSize*3)-defCellSize, defCellGap, defCellSize*3, defCellSize)){
+        screen = 2;
+    }
     
     //  scroll buttons
     
     if (showCardstartheight >= 3*defCellSize+defCellGap){   // up button
         ofFill();
         ofSetColor(40,40,40);
-        ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2), defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2, 5);   // UP button
+        ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2), defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2, defRounded);   // UP button
     } else {
         ofFill();
         ofSetColor(80, 80, 80);
-        ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2), defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2, 5);   // UP button
+        ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2), defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2, defRounded);   // UP button
         ofSetColor(252, 186, 3);
         ofSetLineWidth(2);
         ofNoFill();
-        ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2), defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2, 5);   // UP button
+        ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2), defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2, defRounded);   // UP button
         if (clickLeft(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2), defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2) && ofGetElapsedTimeMillis() > lastInteraction + defWaitTime && overlay == 0){
             lastInteraction = ofGetElapsedTimeMillis();
             showCardstartheight = showCardstartheight + defCellSize;
@@ -373,15 +939,15 @@ void ofApp::showFileConfig(){   // Showfile screen (load, save, delete and confi
     if (showCardstartheight+(showsList.size()*showCardHeight)+defCellGap+(showsList.size()*defCellGap)+showCardHeight <= ofGetHeight()-defCellGap){ // down button
         ofFill();
         ofSetColor(40,40,40);
-        ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2) + (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2 + defCellGap, defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2, 5);  // DOWN button
+        ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2) + (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2 + defCellGap, defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2, defRounded);  // DOWN button
     } else {
         ofFill();
         ofSetColor(80, 80, 80);
-        ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2) + (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2 + defCellGap, defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2, 5);  // DOWN button
+        ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2) + (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2 + defCellGap, defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2, defRounded);  // DOWN button
         ofSetColor(252, 186, 3);
         ofSetLineWidth(2);
         ofNoFill();
-        ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2) + (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2 + defCellGap, defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2, 5);  // DOWN button
+        ofDrawRectRounded(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2) + (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2 + defCellGap, defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2, defRounded);  // DOWN button
         if (clickLeft(defCellGap*2+showCardWidth, 3*defCellSize+(defCellGap*2) + (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2 + defCellGap, defCellSize/2, (ofGetHeight()-(3*defCellSize+defCellGap)-(defCellGap*4)-defCellGap/2)/2-defCellGap/2) && ofGetElapsedTimeMillis() > lastInteraction + defWaitTime && overlay == 0){
             lastInteraction = ofGetElapsedTimeMillis();
             showCardstartheight = showCardstartheight - defCellSize;
@@ -394,7 +960,7 @@ void ofApp::showFileConfig(){   // Showfile screen (load, save, delete and confi
     
 }
 
-void ofApp::genShowFileStr(){
+void ofApp::genShowFileStr(){       // Parser - Generates string data representing showfile
     //  output colPanel string test
     
     // delimiter key: '^' = new panel, '$' new class attribute, '/' new (secondary) class attribute (savedData example storedBright), '|' new vector index, '*' no storedData
@@ -580,7 +1146,7 @@ void ofApp::addPanelOverlay(){
     ofSetColor(255,255,255,255);
     pageMain.drawString("Add Panel", (ofGetWidth()/2)-(defCellSize*4)-(defCellGap*3), (ofGetHeight()/2)-(defCellSize*2)-(defCellGap*3) - defCellGap);
     ofSetColor(70, 70, 70);
-    ofDrawRectRounded(ofGetWidth()/2 - width/2, ofGetHeight()/2 - height/2, width, height, 5);
+    ofDrawRectRounded(ofGetWidth()/2 - width/2, ofGetHeight()/2 - height/2, width, height, defRounded);
     ofNoFill();
     ofSetColor(255, 0, 0);
     ofDrawRectangle(ofGetWidth()/2 +(((ofGetWidth()/2)-(defCellSize*4)-(defCellGap*3))-defCellSize)/2, (ofGetHeight()/2)-(defCellSize*2)-(defCellGap*3)-defCellGap, defCellSize/2, -defCellSize/2);
@@ -598,7 +1164,7 @@ void ofApp::addPanelOverlay(){
     for (int r = 0; r < 4; r++){
         for (int c = 0; c < 4; c++){
             if (panelIndex < knownPanelType.size()){
-                ofDrawRectRounded(ofGetWidth()/2 - width/2 + defCellGap + (buttonWidth * c) + (defCellGap * c), ofGetHeight()/2 - height/2 + defCellGap + (buttonHeight * r) + (defCellGap * r), buttonWidth, buttonHeight, 5);
+                ofDrawRectRounded(ofGetWidth()/2 - width/2 + defCellGap + (buttonWidth * c) + (defCellGap * c), ofGetHeight()/2 - height/2 + defCellGap + (buttonHeight * r) + (defCellGap * r), buttonWidth, buttonHeight, defRounded);
                 fixMain.drawString(knownPanelType[panelIndex].name, ofGetWidth()/2 - width/2 + defCellGap + (buttonWidth * c) + (defCellGap * c) + defCellGap, ofGetHeight()/2 - height/2 + defCellGap + (buttonHeight * r) + (defCellGap * r) + (defCellGap*2));
                 theX = ofGetWidth()/2 - width/2 + defCellGap + (buttonWidth * c) + (defCellGap * c);
                 theY = ofGetHeight()/2 - height/2 + defCellGap + (buttonHeight * r) + (defCellGap * r);
@@ -1078,7 +1644,7 @@ void ofApp::colorsPanel(int i){     // panel for storing / defining colours
                                 panels[i].savedColors[getCellByIden].r = mouseColors[0];
                                 panels[i].savedColors[getCellByIden].g = mouseColors[1];
                                 panels[i].savedColors[getCellByIden].b = mouseColors[2];
-                                panels[i].savedColors[getCellByIden].name = "C #" + to_string(getCellByIden);
+                                panels[i].savedColors[getCellByIden].name = "Color";
                                 panels[i].savedColors[getCellByIden].set = true;
                             } else if (mode == "delete") {
                                 mode = "";
@@ -1089,9 +1655,11 @@ void ofApp::colorsPanel(int i){     // panel for storing / defining colours
                                 panels[i].savedColors[getCellByIden].set = false;
                             } else if (mode == "rename" && strInputObj.fieldInputState == 0){   // incomplete renaming function
                                 strInputObj.fieldInputState = 1;
+                                strInputObj.screenType = 0;
                                 strInputObj.maxCount = 6;
                                 strInputObj.current = panels[i].savedColors[getCellByIden].name;
                                 strInputObj.textValue = panels[i].savedColors[getCellByIden].name;
+                                ptrType = 0;
                                 fieldPtr = &panels[i].savedColors[getCellByIden].name;
                     
                             }
@@ -1277,7 +1845,7 @@ void ofApp::posPanel(int i){
                     } else {
                         ofSetColor(59, 194, 41);   //set colour of cell
                         ofNoFill();
-                        ofDrawRectRounded(x + (c * defCellSize), y + (r*defCellSize), defCellSize, defCellSize,10);
+                        ofDrawRectRounded(x + (c * defCellSize), y + (r*defCellSize), defCellSize, defCellSize,defRounded*2);
                         ofSetLineWidth(1);
                         fixText.drawString(to_string(panels[i].savedPositions[getCellByIden].iden),x+ 10 + (c * defCellSize),y + 17 + (r*defCellSize));
                         ofNoFill();
@@ -1299,6 +1867,7 @@ void ofApp::posPanel(int i){
                                 strInputObj.maxCount = 6;
                                 strInputObj.current = panels[i].savedPositions[getCellByIden].name;
                                 strInputObj.textValue = panels[i].savedPositions[getCellByIden].name;
+                                ptrType = 0;
                                 fieldPtr = &panels[i].savedPositions[getCellByIden].name;
                     
                             }
@@ -1315,7 +1884,7 @@ void ofApp::posPanel(int i){
                     rectShape.y = y + (r*defCellSize);
                     rectShape.width = defCellSize;
                     rectShape.height = defCellSize;
-                    ofDrawRectRounded(rectShape,r,10,10,10);
+                    ofDrawRectRounded(rectShape,r,10,10,defRounded*2);
                     ofSetColor(255, 255, 255);
                     panelType.drawString("Positn",x+ 5 + (c * defCellSize),y + 17 + (r*defCellSize));
                     colorsIcon.draw(x+12 + (c * defCellSize),y+15 + (r*defCellSize),iconSize,iconSize);
@@ -1473,17 +2042,31 @@ void ofApp::simulatedFixture(int fixAddress){
 void ofApp::loadIconsFonts(){
     
     // fonts
-    debugText.load("Lato-Regular.ttf", 15);
-    panelName.load("Lato-Regular.ttf", 10);
-    panelType.load("Lato-Bold.ttf", 15);
-    fixMain.load("Lato-Bold.ttf", 15);
-    cardMain.load("Lato-Bold.ttf", 22);
-    pageMain.load("Lato-Bold.ttf", 45);
-    pageSub.load("Lato-regular.ttf", 30);
-    usrInput.load("Lato-Regular.ttf", 30);
-    fixText.load("Lato-Regular.ttf", 7);
-    uiIcons.load("LibraSans-Bold.ttf", 20);
-    overlayBody.load("Lato-Regular.ttf", 20);
+    
+    vector<int> fontSize = {};
+    fontSize.push_back(defCellSize*0.2143);
+    fontSize.push_back(defCellSize*0.1429);
+    fontSize.push_back(defCellSize*0.2143);
+    fontSize.push_back(defCellSize*0.2143);
+    fontSize.push_back(defCellSize*0.3143);
+    fontSize.push_back(defCellSize*0.6429);
+    fontSize.push_back(defCellSize*0.4286);
+    fontSize.push_back(defCellSize*0.4286);
+    fontSize.push_back(defCellSize*0.1);
+    fontSize.push_back(defCellSize*0.2857);
+    fontSize.push_back(defCellSize*0.2857);
+    
+    debugText.load("Lato-Regular.ttf", fontSize[0]);
+    panelName.load("Lato-Regular.ttf", fontSize[1]);
+    panelType.load("Lato-Bold.ttf", fontSize[2]);
+    fixMain.load("Lato-Bold.ttf", fontSize[3]);
+    cardMain.load("Lato-Bold.ttf", fontSize[4]);
+    pageMain.load("Lato-Bold.ttf", fontSize[5]);
+    pageSub.load("Lato-regular.ttf", fontSize[6]);
+    usrInput.load("Lato-Regular.ttf", fontSize[7]);
+    fixText.load("Lato-Regular.ttf", fontSize[8]);
+    uiIcons.load("LibraSans-Bold.ttf", fontSize[9]);
+    overlayBody.load("Lato-Regular.ttf", fontSize[10]);
     
     // icons / images
     colorsIcon.load("panel_icons/colors.png");
@@ -1501,6 +2084,11 @@ void ofApp::setup(){
     showsList[0].modified = "-";
     showsList[0].freshStart = true;
     showsList[0].active = true;
+    
+    dmxPatch.push_back(dmxPatchObj);
+    dmxPatch.push_back(dmxPatchObj);
+    dmxPatch.push_back(dmxPatchObj);
+    
     
     
     // prepare known panel types for user definition
@@ -1716,6 +2304,8 @@ void ofApp::draw(){
         
     
     
+        
+        
     if (panels.size() > 0){
         for (int i = 0; i < panels.size(); i++){
             uipanel(i);
@@ -1754,10 +2344,27 @@ void ofApp::draw(){
         if (strInputObj.fieldInputState == 1){
             strInput("#", strInputObj.maxCount);
         }
+    } else if (screen == 2){
+        drawGrid();
+        fixtureConfig();
+        if (strInputObj.fieldInputState == 1){
+            cout << "TRUE" << endl;
+            strInput("#", strInputObj.maxCount);
+        }
     }
+
     
     if (showDel){
         delOverlay();
+    }
+    
+    if (showBlock){
+        blockFeature();
+        if (ofGetElapsedTimeMillis() > lastInteraction + 2000){
+            showBlock = false;
+            overlay = 0;
+            
+        }
     }
 
 
@@ -1767,6 +2374,7 @@ void ofApp::draw(){
     if (strInputObj.fieldInputState == 3){
         strInputObj.fieldInputState = 0;
     }
+
 }
 
 
@@ -1774,18 +2382,21 @@ void ofApp::draw(){
 void ofApp::keyPressed(int key){
     
     if (key > 31 && key < 126 && strInputObj.textValue.length() < maxCharacterCount){
-        char myChar = key;
-        if (myChar != '!' && myChar != '@' && myChar != '#' && myChar != '$' && myChar != '%' && myChar != '^' && myChar != '&' && myChar != '*' && myChar != '(' && myChar != ')' && myChar != '/' && myChar != '|' && myChar != '`'){
-            strInputObj.textValue = strInputObj.textValue + myChar;
+        if (strInputObj.screenType == 0){   // Allow char's that are not ints
+            char myChar = key;
+            if (myChar != '!' && myChar != '@' && myChar != '#' && myChar != '$' && myChar != '%' && myChar != '^' && myChar != '&' && myChar != '*' && myChar != '(' && myChar != ')' && myChar != '/' && myChar != '|' && myChar != '`'){
+                strInputObj.textValue = strInputObj.textValue + myChar;
+            }
+        
+        } else if (strInputObj.screenType == 1){    // allow only chars that represent integer numbers
+            char myChar = key;
+            if (myChar != '!' && myChar != '@' && myChar != '#' && myChar != '$' && myChar != '%' && myChar != '^' && myChar != '&' && myChar != '*' && myChar != '(' && myChar != ')' && myChar != '/' && myChar != '|' && myChar != '`'){
+                if (key > 47 && key < 58){
+                    strInputObj.textValue = strInputObj.textValue + myChar; // Only allow characters that represent numbers
+                }
+            }
         }
-        
-//        cout << "TEXT: " << strInputObj.textValue << endl;
-//        cout << "KEY: " << myChar << endl;
-//        cout << "NUM: " << to_string(key) << endl;
-        
-        vector<string> myVect = {};
-        
-//        cout << strInputObj.textValue[0] << endl;
+
     }
 
     if (key == OF_KEY_BACKSPACE && strInputObj.textValue.size() > 0){
@@ -1798,7 +2409,12 @@ void ofApp::keyPressed(int key){
     
     if (key == OF_KEY_RETURN && strInputObj.textValue.size() > 0){
         strInputObj.fieldInputState = 3;
-        *fieldPtr = strInputObj.textValue;
+        if (ptrType == 0){
+            *fieldPtr = strInputObj.textValue;
+        } else if (ptrType == 1){
+            *fieldPtrInt = stoi(strInputObj.textValue);
+        }
+        
         mode = "";
         overlay = 0;
     }
@@ -1818,6 +2434,7 @@ void ofApp::mouseMoved(int x, int y ){
 void ofApp::mouseDragged(int x, int y, int button){
     if (button == 0){
         mousePExe = 1;
+        mouseExe = 1;
     }
 }
 

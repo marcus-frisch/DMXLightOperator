@@ -1,0 +1,43 @@
+//OLD
+for (int p = 0; p < newPanels.size()-1; p++){
+                                   panels.push_back(panelObj);
+                                   vector<string> allChars;    // Stores the characters of each value.. this is required as a integer was converted to a string and will need to have each character converted back again. e.g: number 24 = 50, 52 (ascii codes)
+                                   for (int a = 0; a < newPanels[0][0].size(); a++){   // [0][0] represents the ".x" attrubute of the panel object and so on
+                                       cout << "SIZE: " << to_string(newPanels[0][0].size()) << endl;
+                                        allChars.push_back(newPanels[0][0][a]);
+                                   }
+                                   string output;
+                                   for (int l = 0; l < allChars.size(); l++){
+                                       output = output + char(stoi(allChars[l]));
+                                   }
+                                   cout << "OUT " << output << endl;
+                                   if (output != "*"){  panels[0].x = stoi(output);}
+
+
+
+                                   allChars = {};
+                                   for (int a = 0; a < newPanels[0][1].size(); a++){   //  .y
+                                       cout << "SIZE: " << to_string(newPanels[0][1].size()) << endl;
+                                        allChars.push_back(newPanels[0][1][a]);
+                                   }
+                                   output = "";
+                                   for (int l = 0; l < allChars.size(); l++){
+                                       output = output + char(stoi(allChars[l]));
+                                   }
+                                   cout << "OUT " << output << endl;
+
+                                   if (output != "*"){  panels[0].y = stoi(output);}
+
+
+                                   allChars = {};
+                                   for (int a = 0; a < newPanels[0][2].size(); a++){   //  .wi
+                                       cout << "SIZE: " << to_string(newPanels[0][2].size()) << endl;
+                                        allChars.push_back(newPanels[0][2][a]);
+                                   }
+                                   output = "";
+                                   for (int l = 0; l < allChars.size(); l++){
+                                       output = output + char(stoi(allChars[l]));
+                                   }
+                                   cout << "OUT " << output << endl;
+
+                                   if (output != "*"){  panels[0].wi = stoi(output);}

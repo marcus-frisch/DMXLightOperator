@@ -1,0 +1,20 @@
+Mr Lemmon:
+
+for (int c = 1; c < newPanels[panelID][attriID].size(); c++){
+    if (stoi(newPanels[panelID][attriID][c]) != 47){    // '/'
+        quickPrint = quickPrint + newPanels[panelID][attriID][c];
+        int asciiInt = stoi(newPanels[panelID][attriID][c]);
+        char theChar = char(asciiInt);
+        cout << "ASCII INT: " << asciiInt << endl;
+        //rawData.push_back(stoi(to_string(asciiInt-48)));
+        rawData[rawData.size()-1]=rawData[rawData.size()-1]*10+asciiInt-48;
+    }else{
+        cout << "NEW SLASH" << endl;
+        rawData.push_back(0);
+    }
+
+
+
+}
+cout << "THE STRING OUTPUT: " << quickPrint << endl;
+cout << rawData[0] << endl;

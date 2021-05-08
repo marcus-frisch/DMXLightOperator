@@ -5,6 +5,7 @@
 class strInputvalues{
 public:
     int fieldInputState = 0; // 0 none/finished input, 1 onScreen input, 3 completed input - ready for change
+    int screenType; // 0 string ascii input, 1 int only Input
     string current = "";
     int maxCount;
     string textValue = "";
@@ -31,6 +32,16 @@ public:
     vector<dmxChannel> channels;
 };
 
+class dmxPatchclass{
+public:
+    bool verified = false;  // Checks if Patch data is complient e.g if fixtureID is a real fixture and DMX address it a true DMX address
+    bool selected = false;
+    int fixtureID = 0;
+    int universe = 0;
+    int channel = 0;
+    int quantity = 0;
+};
+
 class mouseData{    // stores temporary data (such as data from cells the mouse clicks on
 public:
     int red = 255;
@@ -49,6 +60,15 @@ public:
     int defSpace;
 };
 
+class storedBright{
+public:
+    int iden;
+    bool set = false;
+    int value = 255;
+};
+
+
+
 class ofApp : public ofBaseApp{
 
 	public:
@@ -58,9 +78,11 @@ class ofApp : public ofBaseApp{
 
     void loadIconsFonts();
     
-    int screen = 0; // What screen should be shown on the screen: 0 = showspace, 1, showfiles, 2, fixures
+    int screen = 2; // What screen should be shown on the screen: 0 = showspace, 1, showfiles, 2, fixures
     bool showGrid = false;
     
+    
+    string pleaseCopy;
     
     // Variables regarding string input
     int maxCharacterCount;
@@ -72,16 +94,35 @@ class ofApp : public ofBaseApp{
     
     string showFileData;
     
+    bool showBlock = false;
+    string blockMsg;
+    void blockFeature();
+    
+    void fixtureConfig();
+    
+    void miniButton(int x, int y, string cha);  // mini button.
+    
+    
     void showFileConfig();
     int currentShow = 0;    // Determines if current show is 0 = freshly made (not saved), 1 = loaded from showFile
     string currentShowName;
     
+    int ptrType = 0; // Type of data the pointer variable is.. 0 = string, 1 = int. ( used in keyPressed() )
     string * fieldPtr;
+    int * fieldPtrInt;
+    int * patchSelect;
     string showFilesDir = ofFilePath::getUserHomeDir() + "/Documents/Lucent Showfiles";
+    
+    
     
     string fileSaveAsName;
     string fileSaveAsPath;
     void genShowFileStr(); // Generates showfile data as a string
+    
+    int intParseAttribute(int panelID, int attriID);    //  responcible for parsing interger attribute values from showData string
+    string strParseAttribute(int panelID, int attriID); //  responcible for parsing string attribute values from showData string
+    vector<storedBright> vectBriParseAttribute(int panelID, int attriID); //  responcible for parsing vector attribute values from showData string
+    vector<int> vectParseAttribute(int panelID, int attriID); //  responcible for parsing vector attribute values from showData string
     
     
     //mouse variables
@@ -103,6 +144,9 @@ class ofApp : public ofBaseApp{
     string delData2;
     void delOverlay();
     
+    int lastFlash;
+    int defFlashTime = 500; // Time used to wait between flashes for UI elements e.g Flashing of a text cursor.
+    int flashOn = false;
     int lastInteraction;
     int defWaitTime = 100; // time to wait after user finishes an action before calling the code inside a mouse related function (time in millis)
     bool waitTime(int time);
@@ -111,9 +155,11 @@ class ofApp : public ofBaseApp{
     void simulatedFixture(int fixAddress);
     bool clickLeft(int x, int y, int w, int h);
     bool pressLeft(int x, int y, int w, int h);
+    
     string strInputHeading;
     void strInput(string current, int max);
     
+  
     void addPanelOverlay();
     void drawPanel();
     bool definedStart; //   has the start of a new panel (being drawn) been defined yet
@@ -164,8 +210,9 @@ class ofApp : public ofBaseApp{
     int mouseExe = 0;   // Used for Click functionality
     int mousePExe = 0;  // Used for Pressing functionality
     
-    int defCellSize = 70;
-    int defCellGap = 15;
+    int defCellSize = 70;  // 70
+    int defCellGap = defCellSize*0.2142;
+    int defRounded = defCellSize*0.0714;
     int defMiniButton = defCellSize/2;
     
     int iconSize = 50; //size to draw icons
@@ -199,12 +246,7 @@ public:
     
 };
 
-class storedBright{
-public:
-    int iden;
-    bool set = false;
-    int value = 255;
-};
+
 
 class storedPos{
 public:

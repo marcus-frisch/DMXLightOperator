@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>BuildMachineOSBuild</key>
-	<string>19H15</string>
+	<string>19H1030</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
@@ -44,6 +44,8 @@
 	<string>10.9</string>
 	<key>NSCameraUsageDescription</key>
 	<string>This app needs to access the camera</string>
+	<key>NSHighResolutionCapable</key>
+	<false/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>This app needs to access the microphone</string>
 </dict>
