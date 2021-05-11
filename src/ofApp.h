@@ -17,18 +17,23 @@ public:
     int value;  //e.g 255
 };
 
+class knownChannelClass{ // Pre-known channels LucentOP's panels are designed to work with straight away. ( Check setup() to see channels )
+public:
+    string purpose;
+    string desc;
+};
+
 class dmxFixtureclass{   //dmx fixture
 public:
     string name = "fixture";
     bool simShow = false;
-    int iden;
+    int fixtureID;
     int x;      //simulator x
     int y;      //simulator y
     int w;      //simulator width
     int h;      //simulator height
     int universe;   //dmx universe
     int address;    //dmx start channel
-    int channelCount;
     vector<dmxChannel> channels;
 };
 
@@ -92,6 +97,8 @@ class ofApp : public ofBaseApp{
  
     vector<string> showFileButtons = {"delete", "save as", "load", "save"};
     
+    vector<knownChannelClass> knownChannels = {};
+    
     string showFileData;
     
     bool showBlock = false;
@@ -101,7 +108,7 @@ class ofApp : public ofBaseApp{
     void fixtureConfig();
     
     void miniButton(int x, int y, string cha);  // mini button.
-    
+    void crossButton(int x, int y, int gotoscreen, bool fill, bool checkOverlay);
     
     void showFileConfig();
     int currentShow = 0;    // Determines if current show is 0 = freshly made (not saved), 1 = loaded from showFile
@@ -113,6 +120,7 @@ class ofApp : public ofBaseApp{
     int * patchSelect;
     string showFilesDir = ofFilePath::getUserHomeDir() + "/Documents/Lucent Showfiles";
     
+    int selectedFixDef = -1;
     
     
     string fileSaveAsName;
@@ -124,6 +132,7 @@ class ofApp : public ofBaseApp{
     vector<storedBright> vectBriParseAttribute(int panelID, int attriID); //  responcible for parsing vector attribute values from showData string
     vector<int> vectParseAttribute(int panelID, int attriID); //  responcible for parsing vector attribute values from showData string
     
+   
     
     //mouse variables
     int red = 255;
@@ -183,7 +192,7 @@ class ofApp : public ofBaseApp{
     void posPanel(int i);
     void posMixer(int i);
     void briMixer(int i);
-    void addFixture(string name, bool simShow, int x, int y, int w, int h, int universe, int address, int channelCount);
+    void addFixture(string name, bool simShow, int x, int y, int w, int h, int universe, int address);
     void controlPanel(int i);
     
     void genShowFileDir();  // Used to generate the Showfile Directory
@@ -193,11 +202,12 @@ class ofApp : public ofBaseApp{
     void testFunction();
 
     
-		void keyPressed(int key);
-		void keyReleased(int key);
-		void mouseMoved(int x, int y );
-		void mouseDragged(int x, int y, int button);
 		void mousePressed(int x, int y, int button);
+    void keyPressed(int key);
+            void keyReleased(int key);
+            void mouseMoved(int x, int y );
+            void mouseDragged(int x, int y, int button);
+            
 		void mouseReleased(int x, int y, int button);
 		void mouseEntered(int x, int y);
 		void mouseExited(int x, int y);
