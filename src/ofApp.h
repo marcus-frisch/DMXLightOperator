@@ -14,7 +14,8 @@ public:
 class dmxChannel{   // the dmx channel(s) of each defined fixture
 public:
     string purpose; // e.g "pan", "tilt", "dimmer", "red", "green", "blue", "white", "amber", "uv"
-    int value;  //e.g 255
+    bool effect = false;
+    int value = 0;  //e.g 255
 };
 
 class knownChannelClass{ // Pre-known channels LucentOP's panels are designed to work with straight away. ( Check setup() to see channels )
@@ -83,7 +84,7 @@ class ofApp : public ofBaseApp{
 
     void loadIconsFonts();
     
-    int screen = 2; // What screen should be shown on the screen: 0 = showspace, 1, showfiles, 2, fixures
+    int screen = 0; // What screen should be shown on the screen: 0 = showspace, 1, showfiles, 2 fixures, 3 channels
     bool showGrid = false;
     
     
@@ -192,8 +193,11 @@ class ofApp : public ofBaseApp{
     void posPanel(int i);
     void posMixer(int i);
     void briMixer(int i);
+    void fixpatchgroup(int i);
     void addFixture(string name, bool simShow, int x, int y, int w, int h, int universe, int address);
     void controlPanel(int i);
+    
+    //void scrollBar(int x, int y, );
     
     void genShowFileDir();  // Used to generate the Showfile Directory
     //void errorScreen(string message);   // Used to display an error to the User.
