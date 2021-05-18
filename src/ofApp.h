@@ -9,6 +9,7 @@ public:
     string current = "";
     int maxCount;
     string textValue = "";
+    int search = 0; // 0 Do not search anything, 1 Search DMX Fixture Channel Purpose Pre-definitions
 };
 
 class dmxChannel{   // the dmx channel(s) of each defined fixture
@@ -237,7 +238,7 @@ class ofApp : public ofBaseApp{
     int mouseExe = 0;   // Used for Click functionality
     int mousePExe = 0;  // Used for Pressing functionality
     
-    int defCellSize = 70;  // 70
+    int defCellSize = 140;  // 70
     int defCellGap = defCellSize*0.2142;
     int defRounded = defCellSize*0.0714;
     int defMiniButton = defCellSize/2;
