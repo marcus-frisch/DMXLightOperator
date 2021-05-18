@@ -28,6 +28,10 @@ int main( ){
 /*
  VERY IMPORTANT
  
+ * Search for comment "PS01"
+ 
+ * * Search for comment "FD01"
+ 
  *FIX LINES WITH //$%$%% COMMENT
  
  */

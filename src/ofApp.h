@@ -28,7 +28,9 @@ class dmxFixtureclass{   //dmx fixture
 public:
     string name = "fixture";
     bool simShow = false;
-    int fixtureID;
+    int fixtureID;  // ID used to check up the fixture dictionary
+    int showUID = 0;    // ID used only once in each showFile representing a single Fixture.
+    int patchID;    // Matches with the patchID of the patch that created this fixture object
     int x;      //simulator x
     int y;      //simulator y
     int w;      //simulator width
@@ -38,8 +40,10 @@ public:
     vector<dmxChannel> channels;
 };
 
+
 class dmxPatchclass{
 public:
+    int patchID;    // Represents each Patch
     bool verified = false;  // Checks if Patch data is complient e.g if fixtureID is a real fixture and DMX address it a true DMX address
     bool selected = false;
     int fixtureID = 0;
@@ -84,7 +88,7 @@ class ofApp : public ofBaseApp{
 
     void loadIconsFonts();
     
-    int screen = 0; // What screen should be shown on the screen: 0 = showspace, 1, showfiles, 2 fixures, 3 channels
+    int screen = 2; // What screen should be shown on the screen: 0 = showspace, 1, showfiles, 2 fixures, 3 channels
     bool showGrid = false;
     
     
@@ -108,7 +112,10 @@ class ofApp : public ofBaseApp{
     
     void fixtureConfig();
     
-    void miniButton(int x, int y, string cha);  // mini button.
+    void scrollButtons(int x, int y, int width, int height, int scrollValue, int * scrollValuePtr, int scrollHeightTotal, int scrollStartHeight, int scrollEndHeight);
+    
+    void uiButton(int x, int y, string text, bool active, int width, int height);
+    void miniButton(int x, int y, string cha, bool active);  // mini button.
     void crossButton(int x, int y, int gotoscreen, bool fill, bool checkOverlay);
     
     void showFileConfig();
@@ -145,6 +152,9 @@ class ofApp : public ofBaseApp{
     int mouseBrightness = 52;
     int level = 0;  // 0 grid, 1 panel, 2 control panel, 3 fieldInput
     
+    int increaseFixtureCount = 0;   // Ensures all fixtures throughout the program have a unique ID to prevent a fixture being deleted and a new one to be added resulting in a duplicate fixtureID.
+    
+    
     int overlay = 0; // 0 no overlay, 1 fieldInput
     string mode = "";
     
@@ -160,6 +170,9 @@ class ofApp : public ofBaseApp{
     int lastInteraction;
     int defWaitTime = 100; // time to wait after user finishes an action before calling the code inside a mouse related function (time in millis)
     bool waitTime(int time);
+    void setLi();   //sets lastInteraction to ofGetElapsedTimeMillis()
+    
+    
     
     bool overPanel;
     void simulatedFixture(int fixAddress);
@@ -169,7 +182,6 @@ class ofApp : public ofBaseApp{
     string strInputHeading;
     void strInput(string current, int max);
     
-  
     void addPanelOverlay();
     void drawPanel();
     bool definedStart; //   has the start of a new panel (being drawn) been defined yet
@@ -184,6 +196,7 @@ class ofApp : public ofBaseApp{
     void addFixButton();
     int gX(int x);  //function to generate X coords for element on grid
     int gY(int y);  //function to generate Y coords for element on grid
+    
     
     void uipanel(int i);
     void colorsPanel(int i);
@@ -228,6 +241,8 @@ class ofApp : public ofBaseApp{
     int defCellGap = defCellSize*0.2142;
     int defRounded = defCellSize*0.0714;
     int defMiniButton = defCellSize/2;
+    
+    int showFixturestartheight = (defCellGap*2)+(3*defCellSize);
     
     int iconSize = 50; //size to draw icons
     
@@ -279,6 +294,7 @@ public:
     int r = 5;    // panel corner radius
     int cellSize; // default w and h for fixtures
     int defSpace; // default seperating space size between cells
+    int startIndex = 0; // Can be considered the row or index at which the panel starts displaying from, from another vector or array. (Typically used for "pages" if the panel cannot display the whole array.
     string type = "*";  // panel type identifier     e.g "fixsimulation", "controlpanel"
     string name = "*";  // panel title e.g "simulation"
     vector<storedBright> savedBrightness = {};
