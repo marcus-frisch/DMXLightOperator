@@ -22,6 +22,8 @@ dmxChannel dmxChannelObj;   // DMX fixture channel object
 
 knownChannelClass knownChannelObj;
 
+warningPopup popupObj;
+
 
 vector<showFileFile> showsList;
 vector<showFileFile> showsListAlt; // Used as a alt to the main to store showfiles. e.g used when removing a showfile index from the main array
@@ -30,6 +32,8 @@ showFileFile showFileObject;
 knownPanel knownPanelObj;
 
 strInputvalues strInputObj;
+
+vector<dmxFixtureclass> showFixtures;
 
 
 string ocol = ""; // Represents showfile data as a string
@@ -58,8 +62,31 @@ void ofApp::setLi(){
     lastInteraction = ofGetElapsedTimeMillis();
 }
 
+void ofApp::genShowFixtures(){  // Generate vector with the fixture objects the showfile will actually be using
+    showFixtures = {};
+    
+    vector<int> validPatches = {};
+    
+    for (int i = 0; i < dmxPatch.size(); i++){
+        if (dmxPatch[i].verified){
+            validPatches.push_back(i);
+        }
+    }
+    
+    
+    for (int i = 0; i < validPatches.size(); i++){
+        showFixtures.push_back(fixObj);
+        showFixtures[showFixtures.size()-1].startChannel = dmxPatch[i].channel + (i* dmxPatch[i].quantity * fixturesDef[dmxPatch[i].fixtureID].channels.size());
+        showFixtures[showFixtures.size()-1].patchID = i;
+        showFixtures[showFixtures.size()-1].universe = dmxPatch[i].universe;
+        showFixtures[showFixtures.size()-1].fixtureID = dmxPatch[i].fixtureID;
+        
+    }
+    
+}
 
-void ofApp::blockFeature(){
+
+void ofApp::popUp(){
     level = 3;
     overlay = 1;
     ofSetColor(0, 0, 0,220);
@@ -71,7 +98,7 @@ void ofApp::blockFeature(){
     
     ofSetColor(80, 80, 80);
     ofDrawRectRounded(ofGetWidth()/2-width/2, ofGetHeight()/2-height/2, width, height, defRounded);  // overlay body
-    ofSetColor(235, 64, 52);
+    ofSetColor(popupObj.cR, popupObj.cG, popupObj.cB);
     ofRectangle header; // Define header variables
     header.x = ofGetWidth()/2-width/2;
     header.y = ofGetHeight()/2-height/2;
@@ -83,8 +110,8 @@ void ofApp::blockFeature(){
     ofDrawRectRounded(ofGetWidth()/2-width/2, ofGetHeight()/2-height/2, width, height, defRounded);  // overlay body
     
     ofSetColor(255);
-    panelType.drawString("WARNING", ofGetWidth()/2-(defCellSize), ofGetHeight()/2-height/2 + defCellGap*2);
-    overlayBody.drawString(blockMsg, ofGetWidth()/2-(width/2)+defCellGap, ofGetHeight()/2-height/2 + defCellGap*6);
+    panelType.drawString(popupObj.title, ofGetWidth()/2-(defCellSize), ofGetHeight()/2-height/2 + defCellGap*2);
+    overlayBody.drawString(popupObj.msg, ofGetWidth()/2-(width/2)+defCellGap, ofGetHeight()/2-height/2 + defCellGap*6);
 }
 
 void ofApp::genShowFileDir(){
@@ -280,6 +307,7 @@ void ofApp::strInput(string current, int max){
     overlay = 1;
     maxCharacterCount = max;
     
+    
         ofSetColor(0, 0, 0,220);
         ofFill();
         ofDrawRectangle(0,0,ofGetWindowWidth(), ofGetWindowHeight());
@@ -296,15 +324,15 @@ void ofApp::strInput(string current, int max){
     if (strInputObj.search == 1){   // Search known Channel Purposes for fixture definitions
         int heightOfCard = defCellSize;
         
-        vector<int> foundDefID = {};
-        if (strInputObj.textValue != ""){
-            for (int d = 0; d < knownChannels.size(); d++){
-                string partOfPurpose = "";
-                for (int l = 0; l < strInputObj.textValue.size(); l++){
-                    partOfPurpose = partOfPurpose + knownChannels[d].purpose[l];
+        vector<int> foundDefID = {};        // Vector that stores the index position of Indexes that match the User Input
+        if (strInputObj.textValue != ""){   // Ensure search algorithm only runs if the User provides an input
+            for (int d = 0; d < knownChannels.size(); d++){     // Search through all indexes and check if they match User Input
+                string partOfPurpose = "";  // Reset the current index search chars (new index appending to previous search)
+                for (int l = 0; l < strInputObj.textValue.size(); l++){     // Append same number of characters as user has entered in
+                    partOfPurpose = partOfPurpose + knownChannels[d].purpose[l];  // For the amount of characters the user has input, add the same number of characters from the current index under search
                 }
-                if (strInputObj.textValue == partOfPurpose){
-                    foundDefID.push_back(d);
+                if (strInputObj.textValue == partOfPurpose){    // Check if the current part of the index under search matches what user has input
+                    foundDefID.push_back(d);    // Append the Indexes position to the foundDefID vector.
                 }
             }
         }
@@ -901,10 +929,9 @@ void ofApp::fixtureConfig(){   // Showfile screen (load, save, delete and config
     
     crossButton(ofGetWidth()-defCellGap-defCellSize, defCellGap, 0, true, true);
     
-    ofSetColor(255, 255, 255,100);  // fixtures button
+    ofSetColor(160);  // Showfiles button
     ofSetLineWidth(0);
     ofDrawRectangle(ofGetWidth()-(defCellGap*2)-(defCellSize*3)-defCellSize, defCellGap, defCellSize*3, defCellSize);
-    
     ofSetColor(255, 255, 255, 255);
     ofNoFill();
     ofSetLineWidth(1);
@@ -914,6 +941,31 @@ void ofApp::fixtureConfig(){   // Showfile screen (load, save, delete and config
         setLi();
         screen = 1;
     }
+    
+    ofFill();
+    ofSetColor(160);  // Update DMX button
+    ofSetLineWidth(0);
+    ofDrawRectangle(ofGetWidth()-(defCellGap*3)-(defCellSize*6)-defCellSize, defCellGap, defCellSize*3, defCellSize);
+    ofSetColor(255, 255, 255, 255);
+    ofNoFill();
+    ofSetLineWidth(1);
+    ofDrawRectangle(ofGetWidth()-(defCellGap*3)-(defCellSize*6)-defCellSize, defCellGap, defCellSize*3, defCellSize);
+    panelType.drawString("Update DMX", ofGetWidth()-(defCellGap*3)-(defCellSize*6)-(defCellSize*0.5), defCellGap*4);
+    if (overlay == 0 && clickLeft(ofGetWidth()-(defCellGap*3)-(defCellSize*6)-defCellSize, defCellGap, defCellSize*3, defCellSize)){
+        setLi();
+        genShowFixtures();
+        screen = 0;
+        popupObj.show = true;
+        popupObj.title = "WARNING";
+        popupObj.msg = "DMX functionality updated.\nDMX defined flaws may\ncause unexpected outputs";
+        popupObj.cR = 48;
+        popupObj.cG = 201;
+        popupObj.cB = 53;
+        popupObj.title = 3000;
+        
+    }
+    
+    
 
 }
 
@@ -991,8 +1043,17 @@ void ofApp::showFileConfig(){   // Showfile screen (load, save, delete and confi
                         }
                     } else if (text == "load"){
                         lastInteraction = ofGetElapsedTimeMillis();
-                        showBlock = true;
-                        blockMsg = "The developer has removed Load\nfunctionality in this build.";
+                        popupObj.show = true;
+                        popupObj.title = "WARNING";
+                        popupObj.msg = "The developer has removed Load\nfunctionality in this build.";
+                        popupObj.cR = 235;
+                        popupObj.cG = 64;
+                        popupObj.cB = 52;
+                        popupObj.time = 2000;
+                        
+//                        showBlock = true;
+//                        blockMsg = "The developer has removed Load\nfunctionality in this build.";
+
 //                        string line;
 //                        fstream myfile;
 //                        myfile.open(showsList[i].path, fstream::in);
@@ -1555,7 +1616,7 @@ void ofApp::controlPanel(int i){    // function responsible for drawing the cont
                     ofFill();
                     ofDrawRectangle(x+(defCellGap/2) + (defCellSize*c), y+(defCellGap/2) + (defCellSize*r), defCellSize-(defCellGap), defCellSize-(defCellGap));
                     ofSetColor(255, 255, 255);
-                    fixText.drawString(cpActions[indexAction],x+12 + (defCellSize*c),y+36 + (defCellSize*r));
+                    fixText.drawString(cpActions[indexAction],x+12 + (defCellSize*c),y+defCellGap + (defCellSize*r));
                     ofNoFill();
                     ofSetColor(252, 186, 3);
                     ofSetLineWidth(2);
@@ -2022,7 +2083,7 @@ void ofApp::colorsPanel(int i){     // panel for storing / defining colours
                     rectShape.height = defCellSize;
                     ofDrawRectRounded(rectShape,r,10,10,10);
                     ofSetColor(255, 255, 255);
-                    panelType.drawString("Colors",x+ 5 + (c * defCellSize),y + 17 + (r*defCellSize));
+                    panelType.drawString("Colors",x+ defCellGap/2 + (c * defCellSize),y + defCellGap + (r*defCellSize));
                     colorsIcon.draw(x+12 + (c * defCellSize),y+15 + (r*defCellSize),iconSize,iconSize);
                     ofNoFill();
                     ofSetLineWidth(2);
@@ -2290,7 +2351,7 @@ void ofApp::addFixture(string name, bool simShow, int x, int y, int w, int h, in
     fixturesDef[fixturesDef.size()-1].w = defCellSize;
     fixturesDef[fixturesDef.size()-1].h = defCellSize;
     fixturesDef[fixturesDef.size()-1].universe = 1;
-    fixturesDef[fixturesDef.size()-1].address = fixturesDef.size() * 9 + 1;
+    fixturesDef[fixturesDef.size()-1].startChannel = fixturesDef.size() * 9 + 1;
     
 }
 
@@ -2441,10 +2502,6 @@ void ofApp::fixpatchgroup(int i){
             }
             }
         
-        cout << "MAX ROWS : " << to_string(maxRows) << endl;
-        cout << "START ROW: " << to_string(panels[i].startIndex) << endl;
-        cout << "VERIFIED: " << to_string(knownVerified.size()) << endl;
-        
         if (panels[i].startIndex > 0){
             uiButton(x+defCellGap, y+hi-defCellSize, "<<", true, wi/2-defCellGap*2, defCellSize-defCellGap);
             if (clickLeft(x+defCellGap, y+hi-defCellSize, wi/2-defCellGap*2, defCellSize-defCellGap)){
@@ -2473,6 +2530,111 @@ void ofApp::fixpatchgroup(int i){
     
     
 }
+
+
+
+
+
+void ofApp::fixtures(int i){
+    int x = gX(panels[i].x);
+    int y = gY(panels[i].y);
+    int wi = panels[i].wi*defCellSize;
+    int hi = panels[i].hi*defCellSize;
+    int r = panels[i].r;
+    int cellSize = panels[i].cellSize;
+    int defSpace = panels[i].defSpace;
+    
+    string type = panels[i].type;
+    string name = panels[i].name;
+    int cellC = panels[i].x * panels[i].y;   //number of cells panel can fit (or resolution of cells)
+    int wid = panels[i].wi;
+    int hei = panels[i].hi;
+    int multi = wid * hei;
+    
+    ofFill();
+    ofSetColor(30);
+    ofSetLineWidth(0);
+    ofDrawRectRounded(x, y, wi, hi, r);
+    ofSetColor(252, 186, 3);
+    ofSetLineWidth(1);
+    ofNoFill();
+    ofDrawRectRounded(x, y, wi, hi, r);
+    ofFill();
+    ofRectangle header; // Define header variables
+    header.x = x;
+    header.y = y;
+    header.width = wi;
+    header.height = defCellSize/2;
+    ofDrawRectRounded(header, 5,5,0,0); // draw header
+    ofSetColor(255);
+    panelType.drawString("Fixtures", x + defCellSize/2, y+defCellGap*2);
+        
+    vector<int> knownVerified = {};
+    
+    for (int u = 0; u < dmxPatch.size(); u++){
+        if (dmxPatch[u].verified){
+            knownVerified.push_back(u);
+        }
+
+    }
+    
+    int maxRows = (hi - defCellSize*2)/(defCellSize/3);
+    
+    
+    if (showFixtures.size() > 0){  // Check if there is verified patches and if there is display them below
+        ofSetColor(255);
+        fixText.drawString("Chan", x+ defCellGap, y+defCellSize/2+defCellGap);
+        fixText.drawString("Name", x+ defCellGap+defCellSize/2, y+defCellSize/2+defCellGap);
+        ofSetColor(80);
+        ofDrawLine(x, y+defCellSize/2+defCellGap*1.5, x+wi, y+defCellSize/2+defCellGap*1.5);
+        ofDrawLine(x+defCellSize/2+defCellGap/3, y+defCellSize/2, x+defCellSize/2+defCellGap/3, y+hi-defCellSize);
+        //ofDrawLine(x+defCellSize/2+defCellGap/2+defCellSize/2, y+defCellSize/2, x+defCellSize/2+defCellGap/2+defCellSize/2, y+hi-defCellSize);
+        //ofDrawLine(x+defCellSize/2+defCellGap/2+defCellSize, y+defCellSize/2, x+defCellSize/2+defCellGap/2+defCellSize, y+hi-defCellSize);
+    
+        for (int p = panels[i].startIndex; p < panels[i].startIndex + maxRows; p++){
+            int mappedP = ofMap(p, panels[i].startIndex, panels[i].startIndex + maxRows, 0, maxRows);
+            if (p < knownVerified.size()){
+            ofSetColor(255);
+            panelName.drawString(to_string(dmxPatch[p].channel), x + defCellGap, y+defCellSize/2+defCellGap*2.5+(defCellGap*mappedP*1.7));
+            panelName.drawString(to_string(dmxPatch[p].channel), x + defCellSize/2 + defCellGap*1.5, y+defCellSize/2+defCellGap*2.5+(defCellGap*mappedP*1.7));
+            
+            ofSetColor(80);
+            ofDrawLine(x, y+defCellSize/2+defCellGap*3+(defCellGap*mappedP*1.7), x+wi, y+defCellSize/2+defCellGap*3+(defCellGap*mappedP*1.7));
+            }
+            }
+        
+        
+//        if (panels[i].startIndex > 0){
+//            uiButton(x+defCellGap, y+hi-defCellSize, "<<", true, wi/2-defCellGap*2, defCellSize-defCellGap);
+//            if (clickLeft(x+defCellGap, y+hi-defCellSize, wi/2-defCellGap*2, defCellSize-defCellGap)){
+//                panels[i].startIndex = panels[i].startIndex - maxRows;
+//            }
+//        } else {
+//            uiButton(x+defCellGap, y+hi-defCellSize, "<<", false, wi/2-defCellGap*2, defCellSize-defCellGap);
+//        }
+//
+//        if ((panels[i].startIndex + maxRows) < knownVerified.size()){
+//            uiButton(x+ (defCellGap*3) + wi/2-defCellGap*2, y+hi-defCellSize, ">>", true, wi/2-defCellGap*2, defCellSize-defCellGap);
+//            if (clickLeft(x+ (defCellGap*3) + wi/2-defCellGap*2, y+hi-defCellSize, wi/2-defCellGap*2, defCellSize-defCellGap)){
+//                panels[i].startIndex = panels[i].startIndex + maxRows;
+//            }
+//        } else {
+//            uiButton(x+ (defCellGap*3) + wi/2-defCellGap*2, y+hi-defCellSize, ">>", false, wi/2-defCellGap*2, defCellSize-defCellGap);
+//        }
+        
+    
+    } else {
+        ofSetColor(80);
+        panelType.drawString("No Fixtures found\nTry updating DMX", x+defCellSize, y+hi/2-defCellSize/2+defCellGap);
+    }
+    
+}
+
+
+
+
+
+
 
 void ofApp::uipanel(int i){ //draw panels ---> i is the panelObj of the panel within the panels vector
     int x = gX(panels[i].x);
@@ -2516,6 +2678,8 @@ void ofApp::uipanel(int i){ //draw panels ---> i is the panelObj of the panel wi
         posPanel(i);
     } else if (type == "fixpatchgroup"){
         fixpatchgroup(i);
+    } else if (type == "fixtures"){
+        fixtures(i);
     }
 }
 
@@ -2536,7 +2700,7 @@ void ofApp::simulatedFixture(int fixAddress){
     ofSetLineWidth(1);
     ofDrawRectangle(x, y + h - 20, w, 20);
     ofSetColor(255, 255, 255);
-    fixText.drawString(to_string(fixturesDef[fixAddress].address),x+ 30,y+70 - 5);
+    fixText.drawString(to_string(fixturesDef[fixAddress].startChannel),x+ 30,y+70 - 5);
     ofNoFill();
     ofSetLineWidth(2);
     ofDrawRectangle(x, y, w, h);
@@ -2580,6 +2744,7 @@ void ofApp::loadIconsFonts(){
 
 //--------------------------------------------------------------
 void ofApp::setup(){
+    
     lastInteraction = ofGetElapsedTimeMillis();
     showCardstartheight = 3*defCellSize+defCellGap;
     loadIconsFonts();
@@ -2652,7 +2817,7 @@ void ofApp::setup(){
     fixturesDef[fixturesDef.size()-1].w = 100;
     fixturesDef[fixturesDef.size()-1].h = 100;
     fixturesDef[fixturesDef.size()-1].universe = 1;
-    fixturesDef[fixturesDef.size()-1].address = 1;
+    fixturesDef[fixturesDef.size()-1].startChannel = 1;
     fixturesDef[fixturesDef.size()-1].channels.push_back(dmxChannelObj);
     fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].purpose = "pan";
     fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].value = 0;
@@ -2691,7 +2856,7 @@ void ofApp::setup(){
     fixturesDef[fixturesDef.size()-1].w = 100;
     fixturesDef[fixturesDef.size()-1].h = 100;
     fixturesDef[fixturesDef.size()-1].universe = 1;
-    fixturesDef[fixturesDef.size()-1].address = 1;
+    fixturesDef[fixturesDef.size()-1].startChannel = 1;
     fixturesDef[fixturesDef.size()-1].channels.push_back(dmxChannelObj);
     fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].purpose = "strobe";
     fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].value = 0;
@@ -2790,6 +2955,14 @@ void ofApp::setup(){
     knownPanelType[knownPanelType.size()-1].cellSize = defCellSize;
     knownPanelType[knownPanelType.size()-1].defSpace = 5;
     
+    knownPanelType.push_back(knownPanelObj);
+    knownPanelType[knownPanelType.size()-1].type = "fixtures";
+    knownPanelType[knownPanelType.size()-1].name = "Fixtures";
+    knownPanelType[knownPanelType.size()-1].minWidth = 3;
+    knownPanelType[knownPanelType.size()-1].minHeight = 4;
+    knownPanelType[knownPanelType.size()-1].cellSize = defCellSize;
+    knownPanelType[knownPanelType.size()-1].defSpace = 5;
+    
 //    // pre-drawn Panels
 //    panels.push_back(panelObj);
 //    panels[panels.size()-1].type = "fixsimulation";
@@ -2814,6 +2987,16 @@ void ofApp::setup(){
     panels[panels.size()-1].type = "fixpatchgroup";
     panels[panels.size()-1].name = "Fix Patch\nGroups";
     panels[panels.size()-1].x = 12;
+    panels[panels.size()-1].y = 5;
+    panels[panels.size()-1].wi = 4;
+    panels[panels.size()-1].hi = 7;
+    panels[panels.size()-1].cellSize = defCellSize;
+    
+    
+    panels.push_back(panelObj);
+    panels[panels.size()-1].type = "fixtures";
+    panels[panels.size()-1].name = "Fixtures";
+    panels[panels.size()-1].x = 17;
     panels[panels.size()-1].y = 5;
     panels[panels.size()-1].wi = 4;
     panels[panels.size()-1].hi = 7;
@@ -2896,7 +3079,7 @@ void ofApp::setup(){
 //    fixturesDef[0].w = defCellSize;
 //    fixturesDef[0].h = defCellSize;
 //    fixturesDef[0].universe = 1;
-//    fixturesDef[0].address = 1;
+//    fixturesDef[0].startChannel = 1;
 //    //$%$%% fixturesDef[0].channelData = {0,0,50,124,8,207,8,0,0};
 //    //$%$%% fixturesDef[0].channels = {"pan", "tilt", "dimmer", "red", "green", "blue", "white", "amber", "uv"};    // purpose of each channel
 //    fixturesDef[0].channelCount = fixturesDef[0].channels.size();
@@ -2950,10 +3133,6 @@ void ofApp::draw(){
     }
 
     
-//    simulatedFixture(0);
-//    simulatedFixture(1);
-    
-    
     for (int i = 0; i < fixturesDef.size(); i++){
         simulatedFixture(i);
         
@@ -2995,10 +3174,10 @@ void ofApp::draw(){
         delOverlay();
     }
     
-    if (showBlock){
-        blockFeature();
-        if (ofGetElapsedTimeMillis() > lastInteraction + 2000){
-            showBlock = false;
+    if (popupObj.show){
+        popUp();
+        if (ofGetElapsedTimeMillis() > lastInteraction + popupObj.time){
+            popupObj.show = false;
             overlay = 0;
             
         }
@@ -3013,7 +3192,7 @@ void ofApp::draw(){
     }
     
 //    cout << fixturesDef[0].name;
-//    cout << to_string(fixturesDef[0].address);
+//    cout << to_string(fixturesDef[0].startChannel);
 
 }
 
@@ -3126,5 +3305,6 @@ void ofApp::gotMessage(ofMessage msg){
 void ofApp::dragEvent(ofDragInfo dragInfo){
 
 }
+
 
 

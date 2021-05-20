@@ -30,14 +30,13 @@ public:
     string name = "fixture";
     bool simShow = false;
     int fixtureID;  // ID used to check up the fixture dictionary
-    int showUID = 0;    // ID used only once in each showFile representing a single Fixture.
     int patchID;    // Matches with the patchID of the patch that created this fixture object
     int x;      //simulator x
     int y;      //simulator y
     int w;      //simulator width
     int h;      //simulator height
     int universe;   //dmx universe
-    int address;    //dmx start channel
+    int startChannel;    //dmx start channel address
     vector<dmxChannel> channels;
 };
 
@@ -78,18 +77,28 @@ public:
     int value = 255;
 };
 
+class warningPopup{
+public:
+    bool show = false;
+    string title = "WARNING";
+    string msg;
+    int cR = 235;
+    int cG = 64;
+    int cB = 52;
+    int time = 2000;
+};
 
 
 class ofApp : public ofBaseApp{
 
-	public:
-		void setup();
-		void update();
-		void draw();
+    public:
+        void setup();
+        void update();
+        void draw();
 
     void loadIconsFonts();
     
-    int screen = 2; // What screen should be shown on the screen: 0 = showspace, 1, showfiles, 2 fixures, 3 channels
+    int screen = 0; // What screen should be shown on the screen: 0 = showspace, 1, showfiles, 2 fixures, 3 channels
     bool showGrid = false;
     
     
@@ -107,11 +116,14 @@ class ofApp : public ofBaseApp{
     
     string showFileData;
     
+    
     bool showBlock = false;
     string blockMsg;
-    void blockFeature();
+    void popUp();
     
     void fixtureConfig();
+    
+    void genShowFixtures();
     
     void scrollButtons(int x, int y, int width, int height, int scrollValue, int * scrollValuePtr, int scrollHeightTotal, int scrollStartHeight, int scrollEndHeight);
     
@@ -208,6 +220,7 @@ class ofApp : public ofBaseApp{
     void posMixer(int i);
     void briMixer(int i);
     void fixpatchgroup(int i);
+    void fixtures(int i);
     void addFixture(string name, bool simShow, int x, int y, int w, int h, int universe, int address);
     void controlPanel(int i);
     
@@ -220,25 +233,25 @@ class ofApp : public ofBaseApp{
     void testFunction();
 
     
-		void mousePressed(int x, int y, int button);
+        void mousePressed(int x, int y, int button);
     void keyPressed(int key);
             void keyReleased(int key);
             void mouseMoved(int x, int y );
             void mouseDragged(int x, int y, int button);
             
-		void mouseReleased(int x, int y, int button);
-		void mouseEntered(int x, int y);
-		void mouseExited(int x, int y);
-		void windowResized(int w, int h);
-		void dragEvent(ofDragInfo dragInfo);
-		void gotMessage(ofMessage msg);
+        void mouseReleased(int x, int y, int button);
+        void mouseEntered(int x, int y);
+        void mouseExited(int x, int y);
+        void windowResized(int w, int h);
+        void dragEvent(ofDragInfo dragInfo);
+        void gotMessage(ofMessage msg);
     
     void drawGrid();
     
     int mouseExe = 0;   // Used for Click functionality
     int mousePExe = 0;  // Used for Pressing functionality
     
-    int defCellSize = 140;  // 70
+    int defCellSize = 140;  // 70 or 140 (retina)
     int defCellGap = defCellSize*0.2142;
     int defRounded = defCellSize*0.0714;
     int defMiniButton = defCellSize/2;
@@ -312,3 +325,4 @@ public:
     bool freshStart = false;    // New showscreen on program start
     bool active = false;
 };
+
