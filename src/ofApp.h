@@ -31,10 +31,6 @@ public:
     bool simShow = false;
     int fixtureID;  // ID used to check up the fixture dictionary
     int patchID;    // Matches with the patchID of the patch that created this fixture object
-    int x;      //simulator x
-    int y;      //simulator y
-    int w;      //simulator width
-    int h;      //simulator height
     int universe;   //dmx universe
     int startChannel;    //dmx start channel address
     vector<dmxChannel> channels;
@@ -125,6 +121,8 @@ class ofApp : public ofBaseApp{
     
     void genShowFixtures();
     
+    void updateSelectedFixtures();
+    
     void scrollButtons(int x, int y, int width, int height, int scrollValue, int * scrollValuePtr, int scrollHeightTotal, int scrollStartHeight, int scrollEndHeight);
     
     void uiButton(int x, int y, string text, bool active, int width, int height);
@@ -161,9 +159,11 @@ class ofApp : public ofBaseApp{
     int blue = 255;
     vector<int> mouseColors = {255,255,255,255,255,255}; // Color data the mouse is carrying. Red, Green, Blue, White, Amber, UV
     vector<int> mousePosition = {72,72};  // pan tilt values.
-    vector<int> mouseFixtures;  // array stores "iden" (identifiers) of fixtures
+    vector<int> mouseFixtures = {};  // array stores index array of fixtures from showFixtures
+    bool brightnessChanged = false;
     int mouseBrightness = 52;
     int level = 0;  // 0 grid, 1 panel, 2 control panel, 3 fieldInput
+    bool overFixture = false;
     
     int increaseFixtureCount = 0;   // Ensures all fixtures throughout the program have a unique ID to prevent a fixture being deleted and a new one to be added resulting in a duplicate fixtureID.
     
@@ -188,7 +188,6 @@ class ofApp : public ofBaseApp{
     
     
     bool overPanel;
-    void simulatedFixture(int fixAddress);
     bool clickLeft(int x, int y, int w, int h);
     bool pressLeft(int x, int y, int w, int h);
     
@@ -223,6 +222,7 @@ class ofApp : public ofBaseApp{
     void fixtures(int i);
     void addFixture(string name, bool simShow, int x, int y, int w, int h, int universe, int address);
     void controlPanel(int i);
+    void simulateFixPanel(int i);
     
     //void scrollBar(int x, int y, );
     
@@ -251,7 +251,7 @@ class ofApp : public ofBaseApp{
     int mouseExe = 0;   // Used for Click functionality
     int mousePExe = 0;  // Used for Pressing functionality
     
-    int defCellSize = 140;  // 70 or 140 (retina)
+    int defCellSize = 70;  // 70 or 140 (retina)
     int defCellGap = defCellSize*0.2142;
     int defRounded = defCellSize*0.0714;
     int defMiniButton = defCellSize/2;
@@ -289,14 +289,22 @@ public:
     
 };
 
-
-
 class storedPos{
 public:
     int iden;
     bool set = false;
     string name = "*";
     vector<int> position = {};
+};
+
+class simulateFixtures{
+public:
+    int startChannel;
+    string name;
+    int x;
+    int y;
+    int wi;
+    int hi;
 };
 
 class panelClass{
@@ -315,6 +323,7 @@ public:
     vector<storedPos> savedPositions = {};
     vector<fixColor> savedColors = {};
     vector<int> fadeData = {100,100,100}; // if a panel has faders and the faders are generated using a FOR loop, data may be stored in here.
+    vector<simulateFixtures> panelSimFixtures = {};
 };
 
 class showFileFile{
