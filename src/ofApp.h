@@ -103,7 +103,7 @@ class ofApp : public ofBaseApp{
     // Variables regarding string input
     int maxCharacterCount;
     
-    vector<string> cpActions = {"store", "showfile", "setup", "delete", "rename", "panels", "move", "blackout", "channels", "", "", "", "", "clear", "off"};
+    vector<string> cpActions = {"store", "showfile", "setup", "delete", "rename", "panels", "move", "blackout", "", "", "", "", "", "clear", "off"};
     vector<knownPanel> knownPanelType = {}; // stores objects with Panel type, name, minimum dimensions and abbreviation - generated in setup function.
  
     vector<string> showFileButtons = {"delete", "save as", "load", "save"};
@@ -157,11 +157,12 @@ class ofApp : public ofBaseApp{
     int red = 255;
     int green = 255;
     int blue = 255;
+    bool colorsChanged = false;
     vector<int> mouseColors = {255,255,255,255,255,255}; // Color data the mouse is carrying. Red, Green, Blue, White, Amber, UV
     vector<int> mousePosition = {72,72};  // pan tilt values.
     vector<int> mouseFixtures = {};  // array stores index array of fixtures from showFixtures
     bool brightnessChanged = false;
-    int mouseBrightness = 52;
+    int mouseBrightness = 127;
     int level = 0;  // 0 grid, 1 panel, 2 control panel, 3 fieldInput
     bool overFixture = false;
     

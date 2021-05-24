@@ -104,7 +104,15 @@ void ofApp::updateSelectedFixtures(){
         for (int u = 0; u < showFixtures[mouseFixtures[i]].channels.size(); u++){
             if (showFixtures[mouseFixtures[i]].channels[u].purpose == "dimmer" && brightnessChanged){
                 showFixtures[mouseFixtures[i]].channels[u].value = mouseBrightness;
+            } else if (showFixtures[mouseFixtures[i]].channels[u].purpose == "red" && colorsChanged){
+                showFixtures[mouseFixtures[i]].channels[u].value = mouseColors[0];
+            } else if (showFixtures[mouseFixtures[i]].channels[u].purpose == "green" && colorsChanged){
+                showFixtures[mouseFixtures[i]].channels[u].value = mouseColors[1];
+            } else if (showFixtures[mouseFixtures[i]].channels[u].purpose == "blue" && colorsChanged){
+                showFixtures[mouseFixtures[i]].channels[u].value = mouseColors[2];
             }
+            
+            
         }
     }
 }
@@ -122,6 +130,8 @@ void ofApp::simulateFixPanel(int i){
     string name = panels[i].name;
     int cellC = panels[i].x * panels[i].y;   //number of cells panel can fit (or resolution of cells)
     
+    overFixture = false;
+    
     if (mouseX > x && mouseX < x+wi && mouseY > y && mouseY < y+hi){
         level = 1;
         overPanel = true;
@@ -132,26 +142,7 @@ void ofApp::simulateFixPanel(int i){
     ofDrawRectRounded(x, y, wi, hi,r);
     ofSetColor(255, 255, 255);
     panelName.drawString(name, x + 30, y+10);
-    
-    if (clickLeft(x, y, x+wi, y+hi) && overFixture == false && mode == "store"){
-        mode = "";
-        if (mouseFixtures.size() == 1){
-            panels[i].panelSimFixtures.push_back(panSimFixObj);
-            panels[i].panelSimFixtures[panels[i].panelSimFixtures.size()-1].name = showFixtures[mouseFixtures[0]].name;
-            
-            panels[i].panelSimFixtures[panels[i].panelSimFixtures.size()-1].startChannel = showFixtures[mouseFixtures[0]].startChannel;
-            panels[i].panelSimFixtures[panels[i].panelSimFixtures.size()-1].wi = cellSize;
-            panels[i].panelSimFixtures[panels[i].panelSimFixtures.size()-1].hi = cellSize;
-            if (mouseX > x +cellSize && mouseX < x+wi-cellSize && mouseY > y + cellSize && mouseY < y+hi-cellSize){
-                panels[i].panelSimFixtures[panels[i].panelSimFixtures.size()-1].x = mouseX;
-                panels[i].panelSimFixtures[panels[i].panelSimFixtures.size()-1].y = mouseY;
-            } else {
-                panels[i].panelSimFixtures[panels[i].panelSimFixtures.size()-1].x = x+cellSize*2;
-                panels[i].panelSimFixtures[panels[i].panelSimFixtures.size()-1].y = y+cellSize*2;
-            }
-        }
-    }
-    
+        
     vector<simulateFixtures> panelSimFixTemp = panels[i].panelSimFixtures;  //The following algorithm quickly ensures based of fixture name and starting channel if previously saved fixtures still exist and if not remove them.
     panels[i].panelSimFixtures = {};
     for (int u = 0; u < panelSimFixTemp.size(); u++){
@@ -178,25 +169,92 @@ void ofApp::simulateFixPanel(int i){
         ofFill();
         ofSetLineWidth(0);
         bool foundDimmer = false;
+        int foundColors = 0;
         int dimmerValue = 0;
+        
+        vector<int> fixtureColor = {0,0,0};
+        
         for (int c = 0; c < showFixtures[fixtureIndex].channels.size(); c++){
             if (showFixtures[fixtureIndex].channels[c].purpose == "dimmer"){
                 foundDimmer = true;
                 dimmerValue = showFixtures[fixtureIndex].channels[c].value;
+            } else if (showFixtures[fixtureIndex].channels[c].purpose == "red"){
+                foundColors++;
+                fixtureColor[0] = showFixtures[fixtureIndex].channels[c].value;
+            } else if (showFixtures[fixtureIndex].channels[c].purpose == "green"){
+                foundColors++;
+                fixtureColor[1] = showFixtures[fixtureIndex].channels[c].value;
+            } else if (showFixtures[fixtureIndex].channels[c].purpose == "blue"){
+                foundColors++;
+                fixtureColor[2] = showFixtures[fixtureIndex].channels[c].value;
             }
+            
+            
+            
         }
         if (foundDimmer){
             ofSetColor(dimmerValue);
             ofDrawRectangle(panels[i].panelSimFixtures[n].x, panels[i].panelSimFixtures[n].y, panels[i].panelSimFixtures[n].wi, panels[i].panelSimFixtures[n].hi);
-            
         }
+        
+        if (foundColors == 3){
+            ofSetColor(fixtureColor[0],fixtureColor[1],fixtureColor[2]);
+            ofDrawRectangle(panels[i].panelSimFixtures[n].x, panels[i].panelSimFixtures[n].y, panels[i].panelSimFixtures[n].wi, panels[i].panelSimFixtures[n].hi);
+        }
+        
+        if (foundColors == 3 && foundDimmer){
+            ofSetColor(0,0,0,ofMap(dimmerValue,0,255,255,0));
+            ofDrawRectangle(panels[i].panelSimFixtures[n].x, panels[i].panelSimFixtures[n].y, panels[i].panelSimFixtures[n].wi, panels[i].panelSimFixtures[n].hi);
+        }
+        
+        ofSetColor(0,0,0,127);
+        ofFill();
+        ofDrawRectangle(panels[i].panelSimFixtures[n].x + panels[i].panelSimFixtures[n].wi/4, panels[i].panelSimFixtures[n].y + panels[i].panelSimFixtures[n].hi/4, panels[i].panelSimFixtures[n].wi/2, panels[i].panelSimFixtures[n].hi/2);
+        ofSetColor(255);
+        panelName.drawString(to_string(dimmerValue), panels[i].panelSimFixtures[n].x + panels[i].panelSimFixtures[n].wi/4, panels[i].panelSimFixtures[n].y + panels[i].panelSimFixtures[n].hi/2);
         
         ofNoFill();
         ofSetLineWidth(2);
-        ofSetColor(255);
+        ofSetColor(255,255,255,255);
         ofDrawRectangle(panels[i].panelSimFixtures[n].x, panels[i].panelSimFixtures[n].y, panels[i].panelSimFixtures[n].wi, panels[i].panelSimFixtures[n].hi);
+        
+        if (mouseX > panels[i].panelSimFixtures[n].x && mouseX < panels[i].panelSimFixtures[n].x + panels[i].panelSimFixtures[n].wi && mouseY > panels[i].panelSimFixtures[n].y && mouseY < panels[i].panelSimFixtures[n].y + panels[i].panelSimFixtures[n].hi){
+            overFixture = true;
+            if (mouseExe == 1){
+                bool fixtureAlreadySelected = false;
+                for (int j = 0; j < mouseFixtures.size(); j++){ // ensure the fixture isn't appended if it is already selected
+                    if (mouseFixtures[j] == fixtureIndex){
+                        fixtureAlreadySelected = true;
+                    }
+                }
+                if (fixtureAlreadySelected == false){
+                    mouseFixtures.push_back(fixtureIndex);
+                }
+                
+            }
+        }
+        
+    
+
+    
     }
     
+        if (clickLeft(x, y, x+wi, y+hi) && overFixture == false && mode == "store" && mouseX > x +cellSize && mouseX < x+wi-cellSize && mouseY > y + cellSize && mouseY < y+hi-cellSize){
+            mode = "";
+            if (mouseFixtures.size() == 1){
+                panels[i].panelSimFixtures.push_back(panSimFixObj);
+                panels[i].panelSimFixtures[panels[i].panelSimFixtures.size()-1].name = showFixtures[mouseFixtures[0]].name;
+                
+                panels[i].panelSimFixtures[panels[i].panelSimFixtures.size()-1].startChannel = showFixtures[mouseFixtures[0]].startChannel;
+                panels[i].panelSimFixtures[panels[i].panelSimFixtures.size()-1].wi = cellSize;
+                panels[i].panelSimFixtures[panels[i].panelSimFixtures.size()-1].hi = cellSize;
+                
+                    panels[i].panelSimFixtures[panels[i].panelSimFixtures.size()-1].x = mouseX-cellSize/2;
+                    panels[i].panelSimFixtures[panels[i].panelSimFixtures.size()-1].y = mouseY-cellSize/2;
+                
+            }
+        }
+
 }
 
 
@@ -1786,14 +1844,15 @@ void ofApp::controlPanel(int i){    // function responsible for drawing the cont
                                 mode = "";
                             } else if (cpActions[indexAction] == "clear") {
                                 mode = "";
-                                brightnessChanged = true;
+                                brightnessChanged = false;
+                                colorsChanged = false;
                                 red = 255;
                                 green = 255;
                                 blue = 255;
                                 mouseColors = {255,255,255,255,255,255}; // Color data the mouse is carrying. Red, Green, Blue, White, Amber, UV
                                 mousePosition = {72,72};  // pan tilt values.
                                 mouseFixtures = {};  // array stores index array of fixtures from showFixtures
-                                mouseBrightness = 52;
+                                mouseBrightness = 127;
                             }
                         }
                     }
@@ -1932,6 +1991,7 @@ void ofApp::rgbMixer(int i){       // RGB mixer
             ofFill();
             if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace + (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY >  y + (wi/3) + ((wi/3)/2) && mouseY < y + (wi/3) + ((wi/3)/2) + hi-(wi/3)*2 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){   // check if mouse is in position and map values.
                 mouseColors[f] = ofMap(mouseY, y + (wi/3) + ((wi/3)/2) + hi-(wi/3)*2-1, y + (wi/3) + ((wi/3)/2)+1, 0, 255);
+                colorsChanged = true;
             }
             ofDrawRectRounded(x + defSpace + 3 + ((wi/3) * f), y + (wi/3) + ((wi/3)/2) + hi-(wi/3)*2 -3, (wi/3) - (defSpace * 2)-6,ofMap(mouseColors[f], 0, 255, 0, ((hi-(wi/3)*2)-6)*-1),r);  //  draw mapped value
             ofSetColor(255, 255, 255);
@@ -1940,6 +2000,7 @@ void ofApp::rgbMixer(int i){       // RGB mixer
             fixText.drawString("MAX", x + defSpace + ((wi/3)/2)-20 + ((wi/3) * f), y + (wi/3)+ 20);
             if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace +  (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY > y + (wi/3) && mouseY < y + (wi/3) + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){
                 mouseColors[f] = 255;
+                colorsChanged = true;
             }
             ofSetColor(255, 255, 255);
             ofDrawRectRounded(x + defSpace + ((wi/3) * f), y + hi - (defCellSize/2) + 4, (wi/3) - (defSpace * 2), (defCellSize/2)-10,r);  // MIN
@@ -1947,6 +2008,7 @@ void ofApp::rgbMixer(int i){       // RGB mixer
             fixText.drawString("MIN", x + defSpace + ((wi/3)/2)-20 + ((wi/3) * f),  y + hi - (defCellSize/2) + 20);
             if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace +  (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY > y + hi - (defCellSize/2) + 4 && mouseY <  y + hi - (defCellSize/2) + 4 + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){
                 mouseColors[f] = 0;
+                colorsChanged = true;
             }
 
             ofSetColor(255, 255, 255);
@@ -2741,6 +2803,19 @@ void ofApp::fixtures(int i){
                 panelName.drawString(name,  x + defCellGap*2 + defCellGap*1.5, y+defCellSize/2+defCellGap*2.5+(r*defCellSize/3));
                 ofSetColor(80);
                 ofDrawLine(x, y+defCellSize/2+defCellGap*3+(defCellSize/3*r), x+wi, y+defCellSize/2+defCellGap*3+(defCellSize/3*r));
+                
+                bool fixIsSelected = false;
+                for (int w = 0; w < mouseFixtures.size(); w++){
+                    if (mouseFixtures[w] == index){
+                        fixIsSelected = true;
+                    }
+                }
+                
+                if (fixIsSelected){
+                    ofSetColor(48, 201, 53);
+                    ofDrawCircle(x+wi-defCellGap*2, y+defCellSize/2+defCellGap*2.5+(r*defCellSize/3)-defCellGap/4, defCellGap/2);
+                }
+                
             }
         }
         
@@ -2974,7 +3049,7 @@ void ofApp::setup(){
     knownPanelType[knownPanelType.size()-1].name = "Fixture\nSimulation";
     knownPanelType[knownPanelType.size()-1].minWidth = 5;
     knownPanelType[knownPanelType.size()-1].minHeight = 4;
-    knownPanelType[knownPanelType.size()-1].cellSize = 40;
+    knownPanelType[knownPanelType.size()-1].cellSize = defCellSize*0.75;
     
     knownPanelType.push_back(knownPanelObj);
     knownPanelType[knownPanelType.size()-1].type = "controlpanel";
@@ -3039,13 +3114,13 @@ void ofApp::setup(){
     knownPanelType[knownPanelType.size()-1].cellSize = defCellSize;
     knownPanelType[knownPanelType.size()-1].defSpace = 5;
     
-    knownPanelType.push_back(knownPanelObj);
-    knownPanelType[knownPanelType.size()-1].type = "fixpatchgroup";
-    knownPanelType[knownPanelType.size()-1].name = "Fix Patch\nGroups";
-    knownPanelType[knownPanelType.size()-1].minWidth = 3;
-    knownPanelType[knownPanelType.size()-1].minHeight = 4;
-    knownPanelType[knownPanelType.size()-1].cellSize = defCellSize;
-    knownPanelType[knownPanelType.size()-1].defSpace = 5;
+//    knownPanelType.push_back(knownPanelObj);
+//    knownPanelType[knownPanelType.size()-1].type = "fixpatchgroup";
+//    knownPanelType[knownPanelType.size()-1].name = "Fix Patch\nGroups";
+//    knownPanelType[knownPanelType.size()-1].minWidth = 3;
+//    knownPanelType[knownPanelType.size()-1].minHeight = 4;
+//    knownPanelType[knownPanelType.size()-1].cellSize = defCellSize;
+//    knownPanelType[knownPanelType.size()-1].defSpace = 5;
     
     knownPanelType.push_back(knownPanelObj);
     knownPanelType[knownPanelType.size()-1].type = "fixtures";
@@ -3065,15 +3140,15 @@ void ofApp::setup(){
     panels[panels.size()-1].hi = 5;
     panels[panels.size()-1].cellSize = 40;
     
-    panels.push_back(panelObj);     // Append a UI panel to the panels vector
-    panels[panels.size()-1].type = "fixpatchgroup"; // Type of panel is "fixpatchgroup"
-    panels[panels.size()-1].name = "Fix Patch Groups"; //  Provide the panel a name for title bar
-    panels[panels.size()-1].x = 12; // Application grid reference X coordinate
-    panels[panels.size()-1].y = 5;  // Application grid reference Y coordinate
-    panels[panels.size()-1].wi = 4; // Panel Width (within application grid)
-    panels[panels.size()-1].hi = 7; // Panel height (within application grid)
-    panels[panels.size()-1].cellSize = defCellSize; // Scale panel with rest of applications grid size
-    
+//    panels.push_back(panelObj);     // Append a UI panel to the panels vector
+//    panels[panels.size()-1].type = "fixpatchgroup"; // Type of panel is "fixpatchgroup"
+//    panels[panels.size()-1].name = "Fix Patch Groups"; //  Provide the panel a name for title bar
+//    panels[panels.size()-1].x = 12; // Application grid reference X coordinate
+//    panels[panels.size()-1].y = 5;  // Application grid reference Y coordinate
+//    panels[panels.size()-1].wi = 4; // Panel Width (within application grid)
+//    panels[panels.size()-1].hi = 7; // Panel height (within application grid)
+//    panels[panels.size()-1].cellSize = defCellSize; // Scale panel with rest of applications grid size
+//
     
     panels.push_back(panelObj);
     panels[panels.size()-1].type = "fixtures";
