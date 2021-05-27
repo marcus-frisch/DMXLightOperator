@@ -2,7 +2,7 @@
 
 #include "ofMain.h"
 
-class strInputvalues{
+class strInputvalues{   // Object reponsible for user string input
 public:
     int fieldInputState = 0; // 0 none/finished input, 1 onScreen input, 3 completed input - ready for change
     int screenType; // 0 string ascii input, 1 int only Input
@@ -25,7 +25,7 @@ public:
     string desc;
 };
 
-class dmxFixtureclass{   //dmx fixture
+class dmxFixtureclass{   // DMX show fixture
 public:
     string name = "fixture";
     bool simShow = false;
@@ -37,7 +37,7 @@ public:
 };
 
 
-class dmxPatchclass{
+class dmxPatchclass{    // DMX patch within showfile
 public:
     int patchID;    // Represents each Patch
     bool verified = false;  // Checks if Patch data is complient e.g if fixtureID is a real fixture and DMX address it a true DMX address
@@ -48,14 +48,14 @@ public:
     int quantity = 0;
 };
 
-class mouseData{    // stores temporary data (such as data from cells the mouse clicks on
+class mouseData{    // stores temporary data (such as data from cells the mouse clicks on)
 public:
     int red = 255;
     int greeen = 255;
     int blue = 255;
 };
 
-class knownPanel{
+class knownPanel{   // "Default" known panels LucentOP knows (allowed panels the user can select)
 public:
     string type;
     string name;
@@ -66,14 +66,14 @@ public:
     int defSpace;
 };
 
-class storedBright{
+class storedBright{ // Stored brightness values for brightness storage cells in bristor panel
 public:
     int iden;
     bool set = false;
     int value = 255;
 };
 
-class warningPopup{
+class warningPopup{ // Warning Msg popup object for application
 public:
     bool show = false;
     string title = "WARNING";
@@ -85,65 +85,62 @@ public:
 };
 
 
-class ofApp : public ofBaseApp{
+class ofApp : public ofBaseApp{ // Global values within LucentOP application
 
     public:
-        void setup();
+        void setup(); // Code executed once on initial launch of ofApp
         void update();
-        void draw();
+        void draw(); // Code repeatedly looped until program close
 
-    void loadIconsFonts();
+    void loadIconsFonts(); // Load in fonts and scale them to the correct size
     
-    int screen = 0; // What screen should be shown on the screen: 0 = showspace, 1, showfiles, 2 fixures, 3 channels
-    bool showGrid = false;
+    int screen = 0; // The screen to render: 0 = showspace, 1, showfiles, 2 fixures, 3 channels
+    bool showGrid = false;  // Should the grid be rendered?
+
+    int maxCharacterCount;  // Global value for maximum number of characters users can input for string input
     
-    
-    string pleaseCopy;
-    
-    // Variables regarding string input
-    int maxCharacterCount;
-    
-    vector<string> cpActions = {"store", "showfile", "setup", "delete", "rename", "panels", "move", "blackout", "", "", "", "", "", "clear", "off"};
+    vector<string> cpActions = {"store", "showfile", "setup", "delete", "rename", "panels", "move", "blackout", "", "", "", "", "", "clear", "off"};    // Showfile actions to be rendered in control panel
     vector<knownPanel> knownPanelType = {}; // stores objects with Panel type, name, minimum dimensions and abbreviation - generated in setup function.
  
-    vector<string> showFileButtons = {"delete", "save as", "load", "save"};
+    vector<string> showFileButtons = {"delete", "save as", "load", "save"}; // Action buttons for when listing showfiles
     
-    vector<knownChannelClass> knownChannels = {};
+    vector<knownChannelClass> knownChannels = {};   //Default known DMX channels (generated in setup)
     
-    string showFileData;
-    
-    
-    bool showBlock = false;
-    string blockMsg;
-    void popUp();
-    
-    void fixtureConfig();
-    
-    void genShowFixtures();
-    
-    void updateSelectedFixtures();
-    
-    void scrollButtons(int x, int y, int width, int height, int scrollValue, int * scrollValuePtr, int scrollHeightTotal, int scrollStartHeight, int scrollEndHeight);
-    
-    void uiButton(int x, int y, string text, bool active, int width, int height);
-    void miniButton(int x, int y, string cha, bool active);  // mini button.
-    void crossButton(int x, int y, int gotoscreen, bool fill, bool checkOverlay);
-    
-    void showFileConfig();
-    int currentShow = 0;    // Determines if current show is 0 = freshly made (not saved), 1 = loaded from showFile
-    string currentShowName;
-    
-    int ptrType = 0; // Type of data the pointer variable is.. 0 = string, 1 = int. ( used in keyPressed() )
-    string * fieldPtr;
-    int * fieldPtrInt;
-    int * patchSelect;
-    string showFilesDir = ofFilePath::getUserHomeDir() + "/Documents/Lucent Showfiles";
-    
-    int selectedFixDef = -1;
+    string showFileData;    // String representing the whole showfile
     
     
-    string fileSaveAsName;
-    string fileSaveAsPath;
+    bool showBlock = false; // Show the function blocked prompt?
+    string blockMsg;    // Message to show on prompt
+    void popUp(); // function blocked prompt renderer
+    
+    void fixtureConfig();   // fixtureConfig screen (2)
+    
+    void genShowFixtures(); // Update DMX fixtures within the showfile (validated active fixtures)
+    
+    void updateSelectedFixtures();  // Function takes mouse values and applies them to selected DMX fixtures
+    
+    void scrollButtons(int x, int y, int width, int height, int scrollValue, int * scrollValuePtr, int scrollHeightTotal, int scrollStartHeight, int scrollEndHeight);  // Draw Scroll buttons for Y value responcible for UI elements Y position. Calculate if the elements are off the screen and only show appropriate scroll button
+    
+    void uiButton(int x, int y, string text, bool active, int width, int height); // Draws a UI button (e.g next page)
+    void miniButton(int x, int y, string cha, bool active);  // Draws a "mini" UI button. (Usually used for small actions e.g Add/Remove channel)
+    void crossButton(int x, int y, int gotoscreen, bool fill, bool checkOverlay); // Draw "Cross" ("X") button, if gotoscreen = -1 then don't change the current screen
+    
+    void showFileConfig();  // Showfile config sceeen (1)
+    int currentShow = 0;    // Determines if current active show is 0 = freshly made (not saved), 1 = loaded from showFile
+    string currentShowName; // Current active showfile name
+    
+    int ptrType = 0; //  Determines which pointer value to use for user Input (depending on data type) 0 = string, 1 = int. ( used in keyPressed() )
+    string * fieldPtr;  // Pointer used for string related data
+    int * fieldPtrInt;  // Pointer used for integer related data
+    int * patchSelect;  // Pointer used for remembering which Patch is selected for user input
+    
+    string showFilesDir = ofFilePath::getUserHomeDir() + "/Documents/Lucent Showfiles"; // Default PATH to LucentOP application data (configuration, showfiles e.t.c)
+    
+    int selectedFixDef = -1; // Selected Fixture Definition ID. (Set to -1 when no fixture definition is selected)
+    
+    
+    string fileSaveAsName;  // String responsible for showfiles name when being saved (file name)
+    string fileSaveAsPath;  // String responsible for showfiles's path when being saved
     void genShowFileStr(); // Generates showfile data as a string
     
     int intParseAttribute(int panelID, int attriID);    //  responcible for parsing interger attribute values from showData string
@@ -153,77 +150,81 @@ class ofApp : public ofBaseApp{
     
    
     
-    //mouse variables
-    int red = 255;
+    //mouse variables (values the user has selected --> used to interact with UI elements and selectedFixtures)
+    int red = 255;  // RAW Mouse Colors [Old code and will be removed in future as mouseColors vector is replacement]
     int green = 255;
     int blue = 255;
-    bool colorsChanged = false;
+    bool colorsChanged = false; // Has the User interacted with any Color values?
     vector<int> mouseColors = {255,255,255,255,255,255}; // Color data the mouse is carrying. Red, Green, Blue, White, Amber, UV
-    vector<int> mousePosition = {72,72};  // pan tilt values.
+    vector<int> mousePosition = {72,72};  // fixture pan tilt values.
     vector<int> mouseFixtures = {};  // array stores index array of fixtures from showFixtures
-    bool brightnessChanged = false;
-    int mouseBrightness = 127;
-    int level = 0;  // 0 grid, 1 panel, 2 control panel, 3 fieldInput
-    bool overFixture = false;
+    bool brightnessChanged = false; // Has the User interacted with any Brightness values?
+    int mouseBrightness = 127;  // Brightness the mouse (user) has selected
+    int level = 0;  // 0 grid, 1 panel, 2 control panel, 3 fieldInput (used to prevent overlapping UI elements both being functional at once)
+    bool overFixture = false;   // Is the mouse currently over a simulated fixture?
     
     int increaseFixtureCount = 0;   // Ensures all fixtures throughout the program have a unique ID to prevent a fixture being deleted and a new one to be added resulting in a duplicate fixtureID.
     
     
     int overlay = 0; // 0 no overlay, 1 fieldInput
-    string mode = "";
+    string mode = "";   // What action button has the user clicked on? What mode is the mouse currently in?
     
-    bool showDel = false;
+    bool showDel = false;   // Show Delete Warning MSG popup prompt?
     int delType;    // Overlay that prompts user upon deleting things. type: 0 = file
     string delData1;    // If used for file: data1 represents file path data2 represents file name
     string delData2;
-    void delOverlay();
+    void delOverlay();  // Delete Warning MSG popup prompt renderer
     
-    int lastFlash;
+    int lastFlash;  // Elapsed Millis of application running when a flash last occured (flash for UI element being edited)
     int defFlashTime = 500; // Time used to wait between flashes for UI elements e.g Flashing of a text cursor.
-    int flashOn = false;
-    int lastInteraction;
-    int defWaitTime = 100; // time to wait after user finishes an action before calling the code inside a mouse related function (time in millis)
-    bool waitTime(int time);
+    int flashOn = false;    // Is flash currently being rendered?
+    
+    
+    
+    int lastInteraction;    // Store a copy of the Elapsed Millis the application has been running when the user has last interacted with a UI element
+    int defWaitTime = 100; // time to wait after user finishes an action before calling the code inside a mouse related function (time in millis) - prevents function being called again too soon
+    bool waitTime(int time);   // Has the time passed for the funciton to be called again?? (uses lastInteraction and wait time specified - usually defWaitTime)
     void setLi();   //sets lastInteraction to ofGetElapsedTimeMillis()
     
+    bool showSplash = true; // Should the splashScreen be rendered?
+    void drawSplash(int wait, int fade);    // Draw splash screen with wait time for how long it is shown for and then how long the fade duration is after the wait
     
+    bool overPanel; // Is the mouse over a UI panel?
+    bool clickLeft(int x, int y, int w, int h); // Function that determines if User's left Mouse button is clicked between boundary
+    bool pressLeft(int x, int y, int w, int h); // Function that determines if User's left Mouse button is pressed between boundary
     
-    bool overPanel;
-    bool clickLeft(int x, int y, int w, int h);
-    bool pressLeft(int x, int y, int w, int h);
+    string strInputHeading; // Main/title/heading text to be rendered on user string input overlay
+    void strInput(string current, int max); // UI element for allowing a user to input a string
     
-    string strInputHeading;
-    void strInput(string current, int max);
-    
-    void addPanelOverlay();
-    void drawPanel();
+    void addPanelOverlay(); // Overlay allowing user to select which panel to draw
+    void drawPanel(); // Checks the UIpanel object and determines which ui panel function to call depending on panel type
     bool definedStart; //   has the start of a new panel (being drawn) been defined yet
-    int panelToDraw;
+    int panelToDraw;    // Index of knownPanelType
     int addPanelStage = 0; // 0 = no process, 1 = show panel overlay, 2 = drawing panel.
     int startX; // drawing panel starting coordinates
     int startY;
-    int theDiffX;
-    int theDiffY;
+    int theDiffX;   // Difference in X values of panel dimensions
+    int theDiffY;   // Difference in Y values of panel dimensions
+    
+    void demoShow();    // Update all showFile values to hard-coded pre-defined values for demonstration purposes
     
     
-    void addFixButton();
     int gX(int x);  //function to generate X coords for element on grid
     int gY(int y);  //function to generate Y coords for element on grid
     
     
-    void uipanel(int i);
-    void colorsPanel(int i);
-    void brightnessPanel(int i);
-    void rgbMixer(int i);
+    void uipanel(int i); //draw panels ---> i is the panelObj of the panel within the panels vector
+    void colorsPanel(int i); // UI panel for user storing / defining colours
+    void brightnessPanel(int i); // UI panel for user stored brightness values
+    void rgbMixer(int i); // RGB mixer UI panel
     void wauv(int i);   // White, Amber, UV fader mixer
-    void posPanel(int i);
-    void posMixer(int i);
-    void briMixer(int i);
-    void fixpatchgroup(int i);
-    void fixtures(int i);
-    void addFixture(string name, bool simShow, int x, int y, int w, int h, int universe, int address);
-    void controlPanel(int i);
-    void simulateFixPanel(int i);
+    void posPanel(int i); // UI panel for user defined position values
+    void posMixer(int i); // White Amber UV fader mixer UI panel
+    void briMixer(int i); // brightness mixer UI panel
+    void fixpatchgroup(int i); // UI panel for displaying DMX patches [incomplete]
+    void fixtures(int i); // UI panel that lists all DMX fixtures within the showfile
+    void controlPanel(int i); // function responsible for drawing the control panel
+    void simulateFixPanel(int i); // Simulated fixtures panel
     
     //void scrollBar(int x, int y, );
     
@@ -231,36 +232,39 @@ class ofApp : public ofBaseApp{
     //void errorScreen(string message);   // Used to display an error to the User.
     
     
-    void testFunction();
+    void testFunction(); // Random code in here and can be called anytime to check if code works
 
     
-        void mousePressed(int x, int y, int button);
-    void keyPressed(int key);
-            void keyReleased(int key);
-            void mouseMoved(int x, int y );
-            void mouseDragged(int x, int y, int button);
-            
-        void mouseReleased(int x, int y, int button);
-        void mouseEntered(int x, int y);
-        void mouseExited(int x, int y);
-        void windowResized(int w, int h);
-        void dragEvent(ofDragInfo dragInfo);
-        void gotMessage(ofMessage msg);
+    void mousePressed(int x, int y, int button); // Called when the mouse is being pressed
+    void keyPressed(int key); // Check what key the user is pressing on their ASCII keyboard
+    void keyReleased(int key);
+    void mouseMoved(int x, int y );
+    void mouseDragged(int x, int y, int button); // Called when the mouse is being dragged
+        
+    void mouseReleased(int x, int y, int button); // Called when a mouse button is released
+    void mouseEntered(int x, int y);
+    void mouseExited(int x, int y);
+    void windowResized(int w, int h);
+    void dragEvent(ofDragInfo dragInfo);
+    void gotMessage(ofMessage msg);
     
-    void drawGrid();
+    void drawGrid(); // Subprogram that draws grid on screen (panel placement and UI elements) needs work --> check main.cpp comment
     
     int mouseExe = 0;   // Used for Click functionality
     int mousePExe = 0;  // Used for Pressing functionality
     
-    int defCellSize = 70;  // 70 or 140 (retina)
-    int defCellGap = defCellSize*0.2142;
-    int defRounded = defCellSize*0.0714;
-    int defMiniButton = defCellSize/2;
+    void updateScaling(); // Update all variables responcible for application UI proportion scaling
     
-    int showFixturestartheight = (defCellGap*2)+(3*defCellSize);
+    int defCellSize = 140;  // Value that is responsible for the whole UI proportion scaling within the LucentOP application. Represents one cell's square dimensions on the grid. Should be big enough to accomoodate a single finger on a touchscreen 70 or 140 (retina)
+    int defCellGap = defCellSize*0.2142;    // Gap generally used to space out two or more very close UI elements next to each other
+    int defRounded = defCellSize*0.0714;    // Radius for rounded corners of rounded UI elements
+    int defMiniButton = defCellSize/2;      // Value represented for smaller UI actions (not commonly used throughout application use - such as adding or removing channels from a fixture definition)
+    
+    int showFixturestartheight = (defCellGap*2)+(3*defCellSize);    //  Global variable representing the Y start value for drawing FixtureDefinitions on screen 2
     
     int iconSize = 50; //size to draw icons
     
+    // Font variables
     ofTrueTypeFont debugText;
     ofTrueTypeFont panelName;
     ofTrueTypeFont fixMain;
@@ -272,13 +276,14 @@ class ofApp : public ofBaseApp{
     ofTrueTypeFont usrInput;
     ofTrueTypeFont uiIcons;
     ofTrueTypeFont overlayBody;
+    ofTrueTypeFont splashText;
     ofImage colorsIcon;
     
 
 
 };
 
-class fixColor{
+class fixColor{ // Class used for User defined Color data (stored in each cell in colorstor panel)
 public:
     int iden; //cell identifier
     bool set = false; //has user set colour data
@@ -290,7 +295,7 @@ public:
     
 };
 
-class storedPos{
+class storedPos{ // Class used for User defined position data (stored in each cell in posStor panel)
 public:
     int iden;
     bool set = false;
@@ -298,17 +303,17 @@ public:
     vector<int> position = {};
 };
 
-class simulateFixtures{
+class simulateFixtures{ // Data representing which fixture and where to render inside a simulate fixture panel
 public:
-    int startChannel;
+    int startChannel;   // starting channel and fixture name is used to identify a showfiles fixture instead of a fixtureID incase other fixtures are added and deleted and the vector index changes. - Not the best solution but currently works till something else is figured out
     string name;
     int x;
     int y;
-    int wi;
+    int wi; // Width and height to render that simulated fixture
     int hi;
 };
 
-class panelClass{
+class panelClass{   // Class representing a UI panel
 public:
     int x;        // panel X location
     int y;        // panel Y location
@@ -320,6 +325,7 @@ public:
     int startIndex = 0; // Can be considered the row or index at which the panel starts displaying from, from another vector or array. (Typically used for "pages" if the panel cannot display the whole array.
     string type = "*";  // panel type identifier     e.g "fixsimulation", "controlpanel"
     string name = "*";  // panel title e.g "simulation"
+    //Data the panel stores (most vectors will be empty as a panel usually only revolves around one data purpose e.g colors)
     vector<storedBright> savedBrightness = {};
     vector<storedPos> savedPositions = {};
     vector<fixColor> savedColors = {};
@@ -327,12 +333,13 @@ public:
     vector<simulateFixtures> panelSimFixtures = {};
 };
 
-class showFileFile{
+class showFileFile{ // Class representing showfiles (on startup, files found in directory, demos, e.t.c)
 public:
     string name = "";
     string modified = "";
     string path = "";
     bool freshStart = false;    // New showscreen on program start
     bool active = false;
+    bool isDemo = false;
 };
 
