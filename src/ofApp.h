@@ -232,7 +232,7 @@ class ofApp : public ofBaseApp{ // Global values within LucentOP application
     //void errorScreen(string message);   // Used to display an error to the User.
     
     
-    void testFunction(); // Random code in here and can be called anytime to check if code works
+    void testFunction(); // Random code in here and can be called anytime to check if code works --> Stub used for detecting errors and assiting in development
 
     
     void mousePressed(int x, int y, int button); // Called when the mouse is being pressed
@@ -262,7 +262,7 @@ class ofApp : public ofBaseApp{ // Global values within LucentOP application
     
     int showFixturestartheight = (defCellGap*2)+(3*defCellSize);    //  Global variable representing the Y start value for drawing FixtureDefinitions on screen 2
     
-    int iconSize = 50; //size to draw icons
+    int iconSize = defCellSize*0.5; //size to draw icons
     
     // Font variables
     ofTrueTypeFont debugText;

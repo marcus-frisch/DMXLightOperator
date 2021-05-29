@@ -1,3 +1,4 @@
+// Import required libraries
 #include "ofApp.h"
 #include <math.h>
 #include <iostream>
@@ -6,32 +7,34 @@
 #include <ctime>
 #include <cstdio>
 
+// To understand data each object holds view ofApp.h and check the class definitions
 
-vector<panelClass> panels;  //stores panel object
-panelClass panelObj;
-vector<dmxFixtureclass> fixturesDef;   //stores all dmxFixture objects
-dmxFixtureclass fixObj;
+vector<panelClass> panels;  //stores panel objects within the showfile
+panelClass panelObj;    // Panel object
+vector<dmxFixtureclass> fixturesDef;   //stores all DMX fixture definitions within the showfile
+dmxFixtureclass fixObj; //DMX fixture definition object
 
-vector<dmxPatchclass> dmxPatch;
-dmxPatchclass dmxPatchObj;
+vector<dmxPatchclass> dmxPatch; // Stores all showFile DMX patches
+dmxPatchclass dmxPatchObj;  // Represents each individual DMX patch within the showfile
 
-fixColor colorObj;
-storedBright brightObj;
-storedPos posObj;
+fixColor colorObj;  // Color object for each cell within color storage panel
+storedBright brightObj; // Brightness object for each cell within brightness storage panel
+storedPos posObj; // Position object for each cell within position storage panel
+
 dmxChannel dmxChannelObj;   // DMX fixture channel object
 
-knownChannelClass knownChannelObj;
+knownChannelClass knownChannelObj;  // Known default DMX channel purpose object
 
-warningPopup popupObj;
+warningPopup popupObj;  // Popup overlay object
 
-simulateFixtures panSimFixObj;
+simulateFixtures panSimFixObj;  // Simulated Fixture object for simulated fixtures panel
 
 
-vector<showFileFile> showsList;
+vector<showFileFile> showsList; // Vector for found showfiles from a directory
 vector<showFileFile> showsListAlt; // Used as a alt to the main to store showfiles. e.g used when removing a showfile index from the main array
-showFileFile showFileObject;
+showFileFile showFileObject;    // Object representing a showfile
 
-knownPanel knownPanelObj;
+knownPanel knownPanelObj;   // Default/known panels data object
 
 strInputvalues strInputObj;
 
@@ -76,12 +79,11 @@ void ofApp::genShowFixtures(){  // Generate vector with the fixture objects the 
         }
     }
     
-    for (int i = 0; i < validPatches.size(); i++){
-        
+    for (int i = 0; i < validPatches.size(); i++){  // For the amount of valid User defined DMX patches take their starting DMX channel and DMX quantity and add the DMX fixtures to the showFixtures vector with the correct DMX addresses
         for (int n = 0; n < dmxPatch[validPatches[i]].quantity; n++){
             int numChannels = fixturesDef[dmxPatch[validPatches[i]].fixtureID].channels.size();
             int theStartChannel = dmxPatch[validPatches[i]].channel + (n * numChannels);
-            if (theStartChannel < 512){
+            if (theStartChannel < 512){ // Ensure channel is within the DMX512 protocol
                 showFixtures.push_back(fixObj);
                 showFixtures[showFixtures.size()-1].startChannel = theStartChannel;
                 showFixtures[showFixtures.size()-1].patchID = i;
@@ -100,7 +102,7 @@ void ofApp::genShowFixtures(){  // Generate vector with the fixture objects the 
     
 }
 
-void ofApp::updateSelectedFixtures(){   // Update User selected showfixtures DMX channel values
+void ofApp::updateSelectedFixtures(){   // Update User selected showfixtures DMX channel values with the mouse values (selected values e.g colors, brightness e.t.c)
     for (int i = 0; i < mouseFixtures.size(); i++){
         for (int u = 0; u < showFixtures[mouseFixtures[i]].channels.size(); u++){
             if (showFixtures[mouseFixtures[i]].channels[u].purpose == "dimmer" && brightnessChanged){
@@ -112,8 +114,6 @@ void ofApp::updateSelectedFixtures(){   // Update User selected showfixtures DMX
             } else if (showFixtures[mouseFixtures[i]].channels[u].purpose == "blue" && colorsChanged){
                 showFixtures[mouseFixtures[i]].channels[u].value = mouseColors[2];
             }
-            
-            
         }
     }
 }
@@ -144,14 +144,14 @@ void ofApp::simulateFixPanel(int i){    // Simulated fixtures panel
     ofSetColor(255, 255, 255);
     panelName.drawString(name, x + 30, y+10);
         
-    vector<simulateFixtures> panelSimFixTemp = panels[i].panelSimFixtures;  //The following algorithm quickly ensures based of fixture name and starting channel if previously saved fixtures still exist and if not remove them.
+    vector<simulateFixtures> panelSimFixTemp = panels[i].panelSimFixtures;  //The following algorithm quickly ensures based off the fixture name and starting channel if previously saved fixtures still exist and if not remove them.
     panels[i].panelSimFixtures = {};
     for (int u = 0; u < panelSimFixTemp.size(); u++){
         string findName = panelSimFixTemp[u].name;
         int findChannel = panelSimFixTemp[u].startChannel;
 
         
-        for (int m = 0; m < showFixtures.size(); m++){
+        for (int m = 0; m < showFixtures.size(); m++){  // Checking for fixtures as mentioned in previous comment
             if (showFixtures[m].name == findName && showFixtures[m].startChannel == findChannel){
                 panels[i].panelSimFixtures.push_back(panSimFixObj);
                 panels[i].panelSimFixtures[panels[i].panelSimFixtures.size()-1] = panelSimFixTemp[u];
@@ -164,7 +164,7 @@ void ofApp::simulateFixPanel(int i){    // Simulated fixtures panel
         int fixtureIndex;
         for (int l = 0; l < showFixtures.size(); l++){
             if (showFixtures[l].name == panels[i].panelSimFixtures[n].name && showFixtures[l].startChannel == panels[i].panelSimFixtures[n].startChannel){
-                fixtureIndex = l;
+                fixtureIndex = l;   // Get the index of the showFixture the panel is trying to simulate based of previously stored fixture name and start channel
             }
         }
         ofFill();
@@ -175,7 +175,7 @@ void ofApp::simulateFixPanel(int i){    // Simulated fixtures panel
         
         vector<int> fixtureColor = {0,0,0};
         
-        for (int c = 0; c < showFixtures[fixtureIndex].channels.size(); c++){
+        for (int c = 0; c < showFixtures[fixtureIndex].channels.size(); c++){   // Check if the fixture has data that the panel can effectively display visually such as brightness and color
             if (showFixtures[fixtureIndex].channels[c].purpose == "dimmer"){
                 foundDimmer = true;
                 dimmerValue = showFixtures[fixtureIndex].channels[c].value;
@@ -193,7 +193,7 @@ void ofApp::simulateFixPanel(int i){    // Simulated fixtures panel
             
             
         }
-        if (foundDimmer){
+        if (foundDimmer){   // As mentioned in previous comment if the fixture contains data that can be shown visually, render it for the user to see
             ofSetColor(dimmerValue);
             ofDrawRectangle(panels[i].panelSimFixtures[n].x, panels[i].panelSimFixtures[n].y, panels[i].panelSimFixtures[n].wi, panels[i].panelSimFixtures[n].hi);
         }
@@ -219,7 +219,7 @@ void ofApp::simulateFixPanel(int i){    // Simulated fixtures panel
         ofSetColor(255,255,255,255);
         ofDrawRectangle(panels[i].panelSimFixtures[n].x, panels[i].panelSimFixtures[n].y, panels[i].panelSimFixtures[n].wi, panels[i].panelSimFixtures[n].hi);
         
-        if (mouseX > panels[i].panelSimFixtures[n].x && mouseX < panels[i].panelSimFixtures[n].x + panels[i].panelSimFixtures[n].wi && mouseY > panels[i].panelSimFixtures[n].y && mouseY < panels[i].panelSimFixtures[n].y + panels[i].panelSimFixtures[n].hi){
+        if (mouseX > panels[i].panelSimFixtures[n].x && mouseX < panels[i].panelSimFixtures[n].x + panels[i].panelSimFixtures[n].wi && mouseY > panels[i].panelSimFixtures[n].y && mouseY < panels[i].panelSimFixtures[n].y + panels[i].panelSimFixtures[n].hi){    // Check if mouse is over fixture
             overFixture = true;
             if (mouseExe == 1){
                 bool fixtureAlreadySelected = false;
@@ -240,7 +240,7 @@ void ofApp::simulateFixPanel(int i){    // Simulated fixtures panel
     
     }
     
-        if (clickLeft(x, y, x+wi, y+hi) && overFixture == false && mode == "store" && mouseX > x +cellSize && mouseX < x+wi-cellSize && mouseY > y + cellSize && mouseY < y+hi-cellSize){
+        if (clickLeft(x, y, x+wi, y+hi) && overFixture == false && mode == "store" && mouseX > x +cellSize && mouseX < x+wi-cellSize && mouseY > y + cellSize && mouseY < y+hi-cellSize){   // Allow user to store a fixture in the simulation panel
             mode = "";
             if (mouseFixtures.size() == 1){
                 panels[i].panelSimFixtures.push_back(panSimFixObj);
@@ -289,7 +289,8 @@ void ofApp::popUp(){    // Popup message
 
 void ofApp::genShowFileDir(){   // Generates / checks the existance of the applications default data directory
     
-    bool doesExist = ofDirectory::doesDirectoryExist(showFilesDir); // Check if the directory exists for the specificed directory. (User defined functionality to be implemented in the future)
+    bool doesExist = ofDirectory::doesDirectoryExist(showFilesDir); // Check if the directory exists for the specificed directory.
+                                                                    //(User defined functionality to be implemented in the future)
     
     if (doesExist == false){
         cout << "lucentShowFiles not found, creating directory now" << endl;
@@ -563,7 +564,7 @@ void ofApp::demoShow(){ // Update all showFile values to hard-coded pre-defined 
     dmxPatch[dmxPatch.size()-1].universe = 1;
     dmxPatch[dmxPatch.size()-1].verified = true;
     
-    fixturesDef.push_back(fixObj);
+    fixturesDef.push_back(fixObj);  // Add a fixture object
     fixturesDef[fixturesDef.size()-1].name = "AVE Cobra Wash 100";
     fixturesDef[fixturesDef.size()-1].simShow = true;
     fixturesDef[fixturesDef.size()-1].fixtureID = increaseFixtureCount;
@@ -571,31 +572,22 @@ void ofApp::demoShow(){ // Update all showFile values to hard-coded pre-defined 
     fixturesDef[fixturesDef.size()-1].startChannel = 1;
     fixturesDef[fixturesDef.size()-1].channels.push_back(dmxChannelObj);
     fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].purpose = "pan";
-    fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].value = 0;
     fixturesDef[fixturesDef.size()-1].channels.push_back(dmxChannelObj);
     fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].purpose = "tilt";
-    fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].value = 0;
     fixturesDef[fixturesDef.size()-1].channels.push_back(dmxChannelObj);
     fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].purpose = "dimmer";
-    fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].value = 0;
     fixturesDef[fixturesDef.size()-1].channels.push_back(dmxChannelObj);
     fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].purpose = "red";
-    fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].value = 0;
     fixturesDef[fixturesDef.size()-1].channels.push_back(dmxChannelObj);
     fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].purpose = "green";
-    fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].value = 0;
     fixturesDef[fixturesDef.size()-1].channels.push_back(dmxChannelObj);
     fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].purpose = "blue";
-    fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].value = 0;
     fixturesDef[fixturesDef.size()-1].channels.push_back(dmxChannelObj);
     fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].purpose = "white";
-    fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].value = 0;
     fixturesDef[fixturesDef.size()-1].channels.push_back(dmxChannelObj);
     fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].purpose = "amber";
-    fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].value = 0;
     fixturesDef[fixturesDef.size()-1].channels.push_back(dmxChannelObj);
     fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].purpose = "uv";
-    fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].value = 0;
     increaseFixtureCount++;
     
     fixturesDef.push_back(fixObj);  // Append a fixture definition to the Defined Fixtures vector (fixturesDef)
@@ -613,6 +605,7 @@ void ofApp::demoShow(){ // Update all showFile values to hard-coded pre-defined 
     fixturesDef[fixturesDef.size()-1].channels.push_back(dmxChannelObj);
     fixturesDef[fixturesDef.size()-1].channels[fixturesDef[fixturesDef.size()-1].channels.size()-1].purpose = "Blue";
 
+    // Draw some UI panels
     panels.push_back(panelObj);
     panels[panels.size()-1].type = "fixtures";
     panels[panels.size()-1].name = "Fixtures";
@@ -1002,7 +995,7 @@ void ofApp::fixtureConfig(){   // Showfile screen (load, save, delete and config
         }
         
         if (patchSelect != NULL){
-            if (patchSelect == &dmxPatch[i].fixtureID){
+            if (patchSelect == &dmxPatch[i].fixtureID){ // Check if DMX patch is selected
                 if (flashOn == true){
                     ofSetLineWidth(0);
                     ofFill();
@@ -1330,12 +1323,7 @@ void ofApp::fixtureConfig(){   // Showfile screen (load, save, delete and config
         popupObj.title = 3000;
         
     }
-    
-    
-
 }
-
-
 
 void ofApp::showFileConfig(){   // Showfile screen (load, save, delete and configuration)
     int showCardHeight = 2.5*defCellSize;
@@ -1369,7 +1357,7 @@ void ofApp::showFileConfig(){   // Showfile screen (load, save, delete and confi
             ofNoFill();
             ofSetLineWidth(2);
             ofDrawRectangle(showCardWidth - defCellSize - defCellGap - ((u*defCellSize)+defCellGap*u), showCardstartheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize-defCellGap), defCellSize, defCellSize);
-            if (clickLeft(showCardWidth - defCellSize - defCellGap - ((u*defCellSize)+defCellGap*u), showCardstartheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize-defCellGap), defCellSize, defCellSize)){
+            if (clickLeft(showCardWidth - defCellSize - defCellGap - ((u*defCellSize)+defCellGap*u), showCardstartheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize-defCellGap), defCellSize, defCellSize)){    // Update variables for loading of show demonstration (clear current showfile values)
                 setLi();
                 mode = "";
                 brightnessChanged = false;
@@ -1768,7 +1756,12 @@ void ofApp::showFileConfig(){   // Showfile screen (load, save, delete and confi
 }
 
 void ofApp::genShowFileStr(){       // Parser - Generates string data representing showfile
-    //  output colPanel string test
+    
+    /*
+     
+     Please note this function is old and needs to be updated to accomodate new LucentOP functionality. This function is still active just for concept demonstration and will be updated in the future
+     
+     */
     
     // delimiter key: '^' = new panel, '$' new class attribute, '/' new (secondary) class attribute (savedData example storedBright), '|' new vector index, '*' no storedData
     
@@ -1845,7 +1838,7 @@ void ofApp::genShowFileStr(){       // Parser - Generates string data representi
 }
 
 
-void ofApp::testFunction(){ // Random code in here and can be called anytime to check if code works
+void ofApp::testFunction(){ // Random code in here and can be called anytime to check if code works --> Stub used for detecting errors and assiting in development
     cout << "running test function" << endl;
     genShowFileDir();
     ofstream out(showFilesDir + "/Showfiles" + ofGetTimestampString("ShowFile %F %R") + ".luct", fstream::out | fstream::trunc);
@@ -1956,10 +1949,7 @@ void ofApp::addPanelOverlay(){  // Overlay allowing user to select which panel t
     ofSetColor(70, 70, 70);
     ofDrawRectRounded(ofGetWidth()/2 - width/2, ofGetHeight()/2 - height/2, width, height, defRounded);
     ofNoFill();
-//    ofSetColor(255, 0, 0);
-//    ofDrawRectangle(ofGetWidth()/2 +(((ofGetWidth()/2)-(defCellSize*4)-(defCellGap*3))-defCellSize)/2, (ofGetHeight()/2)-(defCellSize*2)-(defCellGap*3)-defCellGap, defCellSize/2, -defCellSize/2);
-//    fixText.drawString("EXT", ofGetWidth()/2 +(((ofGetWidth()/2)-(defCellSize*4)-(defCellGap*3))-defCellSize)/2+(defCellGap), (ofGetHeight()/2)-(defCellSize*2)-(defCellGap*3)-(defCellGap*2));
-    
+
     crossButton(ofGetWidth()/2 +(((ofGetWidth()/2)-(defCellSize*4)-(defCellGap*3))-defCellSize)/2-defCellGap*2, (ofGetHeight()/2)-(defCellSize*2)-(defCellGap*3)-defCellGap*3, 0, false, false);
     
     ofSetLineWidth(2);
@@ -1968,10 +1958,7 @@ void ofApp::addPanelOverlay(){  // Overlay allowing user to select which panel t
     int theX = 0;
     int theY = 0;
     
-//    if (clickLeft(ofGetWidth()/2 +(((ofGetWidth()/2)-(defCellSize*4)-(defCellGap*3))-defCellSize)/2, (ofGetHeight()/2)-(defCellSize*2)-(defCellGap*3)-defCellGap-(defCellSize/2), defCellSize, defCellSize)){
-//        addPanelStage = 0;
-//        overlay = 0;
-//    }
+
     int panelIndex = 0;
     for (int r = 0; r < 4; r++){
         for (int c = 0; c < 4; c++){
@@ -2934,6 +2921,8 @@ void ofApp::fixpatchgroup(int i){   // UI panel for displaying DMX patches [inco
             }
             }
         
+        // Page scroll buttons
+        
         if (panels[i].startIndex > 0){
             uiButton(x+defCellGap, y+hi-defCellSize, "<<", true, wi/2-defCellGap*2, defCellSize-defCellGap);
             if (clickLeft(x+defCellGap, y+hi-defCellSize, wi/2-defCellGap*2, defCellSize-defCellGap)){
@@ -3181,6 +3170,7 @@ void ofApp::loadIconsFonts(){   // Load in fonts and scale them to the correct s
 
 //--------------------------------------------------------------
 void ofApp::setup(){    // Code executed once on initial launch of ofApp
+    ofSetDataPathRoot("../Resources/data/");
     
     lastInteraction = ofGetElapsedTimeMillis();
     showCardstartheight = 3*defCellSize+defCellGap;
@@ -3431,6 +3421,8 @@ void ofApp::updateScaling(){    // Update all variables responcible for applicat
     if (defCellSize == 70){
         defCellSize = 140;
     } else if (defCellSize == 140){
+        defCellSize = 47;
+    } else if (defCellSize == 47){
         defCellSize = 70;
     }
     
@@ -3438,6 +3430,7 @@ void ofApp::updateScaling(){    // Update all variables responcible for applicat
     defRounded = defCellSize*0.0714;
     defMiniButton = defCellSize/2;
     showFixturestartheight = (defCellGap*2)+(3*defCellSize);
+    iconSize = defCellSize*0.5; //size to draw icons
     
     loadIconsFonts();
     showSplash = true;
