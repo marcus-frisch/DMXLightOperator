@@ -3170,7 +3170,7 @@ void ofApp::loadIconsFonts(){   // Load in fonts and scale them to the correct s
 
 //--------------------------------------------------------------
 void ofApp::setup(){    // Code executed once on initial launch of ofApp
-    ofSetDataPathRoot("../Resources/data/");
+    //ofSetDataPathRoot("../Resources/data/");
     
     lastInteraction = ofGetElapsedTimeMillis();
     showCardstartheight = 3*defCellSize+defCellGap;
