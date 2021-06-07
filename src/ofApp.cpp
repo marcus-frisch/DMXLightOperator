@@ -7,6 +7,9 @@
 #include <ctime>
 #include <cstdio>
 
+#include <stdio.h>      /* printf */
+#include <stdlib.h>     /* system, NULL, EXIT_FAILURE */
+
 // To understand data each object holds view ofApp.h and check the class definitions
 
 vector<panelClass> panels;  //stores panel objects within the showfile
@@ -67,7 +70,7 @@ void ofApp::setLi(){    // Update the users last interaction
     lastInteraction = ofGetElapsedTimeMillis();
 }
 
-void ofApp::genShowFixtures(){  // Generate vector with the fixture objects the showfile will actually be using (DMX enabled fixtures)
+void ofApp::genShowFixtures(){  // Generate vector with the fixture objects the showfile will actually be using (DMX enabled fixtures)  -- Should be called when "update DMX" button is pushed
     showFixtures = {};
     mouseFixtures = {};
     
@@ -102,6 +105,37 @@ void ofApp::genShowFixtures(){  // Generate vector with the fixture objects the 
     
 }
 
+string ofApp::genDMX(int u){  // Generate the DMX values for the specified universe
+    vector<int> dmxData = {};
+    for (int i = 1; i < 512; i++){  // Set all DMX channels to 0
+        dmxData.push_back(0);
+    }
+    vector<int> uniFixtures = {};   // Store the index of all showFixture fixtures that are on the specified DMX universe
+    for (int i = 0; i < showFixtures.size(); i++){
+        if (showFixtures[i].universe == u){
+            uniFixtures.push_back(i);
+        }
+    }
+    
+    for (int i = 0; i < uniFixtures.size(); i++){   // Get the value of the DMX channels of each fixture and set those values in the DMX data with their correct position based off each fixtures starting channel DMX address
+        for (int c = 0; c < showFixtures[uniFixtures[i]].channels.size(); c++){
+            dmxData[showFixtures[uniFixtures[i]].startChannel+c] = showFixtures[uniFixtures[i]].channels[c].value;
+        }
+    }
+    
+    string dmxString = "";
+    for (int i = 1 ; i < 512; i++){
+        if (i != 511){
+            dmxString = dmxString + to_string(dmxData[i]) + ",";
+        } else {
+            dmxString = dmxString + to_string(dmxData[i]);
+        }
+        
+    }
+    
+    return dmxString;
+}
+
 void ofApp::updateSelectedFixtures(){   // Update User selected showfixtures DMX channel values with the mouse values (selected values e.g colors, brightness e.t.c)
     for (int i = 0; i < mouseFixtures.size(); i++){
         for (int u = 0; u < showFixtures[mouseFixtures[i]].channels.size(); u++){
@@ -113,7 +147,12 @@ void ofApp::updateSelectedFixtures(){   // Update User selected showfixtures DMX
                 showFixtures[mouseFixtures[i]].channels[u].value = mouseColors[1];
             } else if (showFixtures[mouseFixtures[i]].channels[u].purpose == "blue" && colorsChanged){
                 showFixtures[mouseFixtures[i]].channels[u].value = mouseColors[2];
+            } else if (showFixtures[mouseFixtures[i]].channels[u].purpose == "pan" && posChanged){
+                showFixtures[mouseFixtures[i]].channels[u].value = mousePosition[0];
+            } else if (showFixtures[mouseFixtures[i]].channels[u].purpose == "tilt" && posChanged){
+                showFixtures[mouseFixtures[i]].channels[u].value = mousePosition[1];
             }
+            
         }
     }
 }
@@ -142,7 +181,7 @@ void ofApp::simulateFixPanel(int i){    // Simulated fixtures panel
     ofSetColor(22, 22, 22);
     ofDrawRectRounded(x, y, wi, hi,r);
     ofSetColor(255, 255, 255);
-    panelName.drawString(name, x + 30, y+10);
+    panelName.drawString(name, x + 30, y+defCellGap);
         
     vector<simulateFixtures> panelSimFixTemp = panels[i].panelSimFixtures;  //The following algorithm quickly ensures based off the fixture name and starting channel if previously saved fixtures still exist and if not remove them.
     panels[i].panelSimFixtures = {};
@@ -219,6 +258,8 @@ void ofApp::simulateFixPanel(int i){    // Simulated fixtures panel
         ofSetColor(255,255,255,255);
         ofDrawRectangle(panels[i].panelSimFixtures[n].x, panels[i].panelSimFixtures[n].y, panels[i].panelSimFixtures[n].wi, panels[i].panelSimFixtures[n].hi);
         
+        // mouseX > x +cellSize && mouseX < x+wi-cellSize && mouseY > y + cellSize && mouseY < y+hi-cellSize
+        
         if (mouseX > panels[i].panelSimFixtures[n].x && mouseX < panels[i].panelSimFixtures[n].x + panels[i].panelSimFixtures[n].wi && mouseY > panels[i].panelSimFixtures[n].y && mouseY < panels[i].panelSimFixtures[n].y + panels[i].panelSimFixtures[n].hi){    // Check if mouse is over fixture
             overFixture = true;
             if (mouseExe == 1){
@@ -238,6 +279,15 @@ void ofApp::simulateFixPanel(int i){    // Simulated fixtures panel
     
 
     
+    }
+    
+    if (mode == "store" && mouseFixtures.size() == 1){
+        ofSetColor(255, 0, 0, 255);
+        ofNoFill();
+//        ofDrawRectRounded(x, y, wi, cellSize, 5);
+//        ofDrawRectRounded(x, y+hi-cellSize, wi, cellSize, 5);
+        
+        ofDrawRectRounded(x + cellSize, y + cellSize, wi - (cellSize*2), hi - (cellSize * 2), 5);
     }
     
         if (clickLeft(x, y, x+wi, y+hi) && overFixture == false && mode == "store" && mouseX > x +cellSize && mouseX < x+wi-cellSize && mouseY > y + cellSize && mouseY < y+hi-cellSize){   // Allow user to store a fixture in the simulation panel
@@ -675,7 +725,7 @@ void ofApp::demoShow(){ // Update all showFile values to hard-coded pre-defined 
     panels[panels.size()-1].x = 0;
     panels[panels.size()-1].y = 11;
     panels[panels.size()-1].wi = 5;
-    panels[panels.size()-1].hi = 4;
+    panels[panels.size()-1].hi = 3;
     panels[panels.size()-1].cellSize = 40;
     
     panels.push_back(panelObj);
@@ -684,7 +734,7 @@ void ofApp::demoShow(){ // Update all showFile values to hard-coded pre-defined 
     panels[panels.size()-1].x = 5;
     panels[panels.size()-1].y = 11;
     panels[panels.size()-1].wi = 3;
-    panels[panels.size()-1].hi = 4;
+    panels[panels.size()-1].hi = 3;
     panels[panels.size()-1].cellSize = 40;
     
     panels.push_back(panelObj);
@@ -693,7 +743,7 @@ void ofApp::demoShow(){ // Update all showFile values to hard-coded pre-defined 
     panels[panels.size()-1].x = 14;
     panels[panels.size()-1].y = 11;
     panels[panels.size()-1].wi = 4;
-    panels[panels.size()-1].hi = 4;
+    panels[panels.size()-1].hi = 3;
     panels[panels.size()-1].cellSize = 40;
     
     genShowFixtures();  // Update showFixtures vector with patches
@@ -2083,11 +2133,32 @@ void ofApp::controlPanel(int i){    // function responsible for drawing the cont
                             } else if (cpActions[indexAction] == "setup"){
                                 screen = 2;
                                 mode = "";
+                                
+//                                string dmxC = "ola_streaming_client -u 1 -d 50,50";
+//                                const char *comm = dmxC.c_str();
+//                                cout << "click" << endl;
+//                                cout << dmxC << endl;
+////                                system(comm);
+//
+//                                system("ola_streaming_client -u 1 -d 50,50");
+                                
+                            } else if (cpActions[indexAction] == "blackout"){
+                                mode = "";
+                                cout << "DMX" << endl;
+                                //ofSystem("export PATH=$PATH:~/opt/bin; ola_dev_info");
+                                if (enableDMXoutput){
+                                    ofSystem("/opt/local/bin/ola_dev_info");
+                                }
+                                
+                                
+                                
                             } else if (cpActions[indexAction] == "clear") {
                                 mode = "";
                                 brightnessChanged = false;
                                 colorsChanged = false;
+                                posChanged = false;
                                 mouseFixtures = {};  // array stores index array of fixtures from showFixtures
+    
                             }
                         }
                     }
@@ -2124,6 +2195,13 @@ void ofApp::briMixer(int i){  // brightness mixer UI panel
     ofDrawRectRounded(x, y, wi, hi,r);
     ofSetColor(255, 255, 255);
     panelName.drawString(name, x+15, y+15);
+    
+    if (mode == "delete"){
+        if (clickLeft(x, y, wi, hi)){
+            delPanel(i);
+            return;
+        }
+    }
 
     if (hei < 4){    //check if panel is too small
         fixText.drawString("Panel\ntoo small", x+80, y+(hi/2)-15);
@@ -2187,6 +2265,13 @@ void ofApp::rgbMixer(int i){       // RGB mixer UI panel
     int wid = panels[i].wi;
     int hei = panels[i].hi;
     int multi = wid * hei;
+    
+    if (mode == "delete"){
+        if (clickLeft(x, y, wi, hi)){
+            delPanel(i);
+            return;
+        }
+    }
     //vector<int> fadata = panels[i].fadeData;
     ofFill();
     ofSetColor(77, 90, 77);
@@ -2269,6 +2354,14 @@ void ofApp::wauv(int i){       // White Amber UV fader mixer UI panel
     int wid = panels[i].wi;
     int hei = panels[i].hi;
     int multi = wid * hei;
+    
+    if (mode == "delete"){
+        if (clickLeft(x, y, wi, hi)){
+            delPanel(i);
+            return;
+        }
+    }
+    
     //vector<int> fadata = panels[i].fadeData;
     ofFill();
     ofSetColor(77, 90, 77);
@@ -2340,6 +2433,14 @@ void ofApp::posMixer(int i){       // White Amber UV fader mixer UI panel
     int wid = panels[i].wi;
     int hei = panels[i].hi;
     int multi = wid * hei;
+    
+    if (mode == "delete"){
+        if (clickLeft(x, y, wi, hi)){
+            delPanel(i);
+            return;
+        }
+    }
+    
     //vector<int> fadata = panels[i].fadeData;
     ofFill();
     ofSetColor(77, 90, 77);
@@ -2361,6 +2462,7 @@ void ofApp::posMixer(int i){       // White Amber UV fader mixer UI panel
                     ofFill();
                     if (mouseX > x + defSpace + ((wi/2) * f) && mouseX < x + defSpace + (wi/2) - (defSpace * 2) + ((wi/2) * f) && mouseY >  y + (wi/2) + ((wi/2)/2) && mouseY < y + (wi/2) + ((wi/2)/2) + hi-(wi/2)*2 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){   // check if mouse is in position and map values.
                         mousePosition[f] = ofMap(mouseY, y + (wi/2) + ((wi/2)/2) + hi-(wi/2)*2-1, y + (wi/2) + ((wi/2)/2)+1, 0, 255);
+                        posChanged = true;
                     }
                     ofDrawRectRounded(x + defSpace + 3 + ((wi/2) * f), y + (wi/2) + ((wi/2)/2) + hi-(wi/2)*2 -3, (wi/2) - (defSpace * 2)-6,ofMap(mousePosition[f], 0, 255, 0, ((hi-(wi/2)*2)-6)*-1),r);  //  draw mapped value
                     ofSetColor(255, 255, 255);
@@ -2369,6 +2471,7 @@ void ofApp::posMixer(int i){       // White Amber UV fader mixer UI panel
                     fixText.drawString("MAX", x + defSpace + ((wi/2)/2)-20 + ((wi/2) * f), y + (wi/2)+ 20);
                     if (mouseX > x + defSpace + ((wi/2) * f) && mouseX < x + defSpace +  (wi/2) - (defSpace * 2) + ((wi/2) * f) && mouseY > y + (wi/2) && mouseY < y + (wi/2) + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){
                         mousePosition[f] = 255;
+                        posChanged = true;
                     }
                     ofSetColor(255, 255, 255);
                     ofDrawRectRounded(x + defSpace + ((wi/2) * f), y + hi - (defCellSize/2) + 4, (wi/2) - (defSpace * 2), (defCellSize/2)-10,r);  // MIN
@@ -2376,6 +2479,7 @@ void ofApp::posMixer(int i){       // White Amber UV fader mixer UI panel
                     fixText.drawString("MIN", x + defSpace + ((wi/2)/2)-20 + ((wi/2) * f),  y + hi - (defCellSize/2) + 20);
                     if (mouseX > x + defSpace + ((wi/2) * f) && mouseX < x + defSpace +  (wi/2) - (defSpace * 2) + ((wi/2) * f) && mouseY > y + hi - (defCellSize/2) + 4 && mouseY <  y + hi - (defCellSize/2) + 4 + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){
                         mousePosition[f] = 0;
+                        posChanged = true;
                     }
 
                     ofSetColor(255, 255, 255);
@@ -2488,6 +2592,12 @@ void ofApp::colorsPanel(int i){     // UI panel for user storing / defining colo
                                 ptrType = 0;
                                 fieldPtr = &panels[i].savedColors[getCellByIden].name;
                     
+                            }  else if (mode == ""){   // Update mouse colors
+                                if (panels[i].savedColors[getCellByIden].set){
+                                    mouseColors[0] = panels[i].savedColors[getCellByIden].r;
+                                    mouseColors[1] = panels[i].savedColors[getCellByIden].g;
+                                    mouseColors[2] = panels[i].savedColors[getCellByIden].b;
+                                }
                             }
                         
                     }
@@ -2510,9 +2620,28 @@ void ofApp::colorsPanel(int i){     // UI panel for user storing / defining colo
                     ofSetLineWidth(2);
                     //ofDrawRectangle(x, y, defCellSize, defCellSize);
                     getCellByIden++;
+                    if (clickLeft(x, y, defCellSize, defCellSize) && mode == "delete"){
+                        delPanel(i);
+                        return;
+                    }
+                    
                 }
             }
         }
+}
+
+void ofApp::delPanel(int i){
+    vector<panelClass> panelsTemp;
+    panelsTemp = panels;
+    panels = {};
+    
+    for (int u = 0; u < panelsTemp.size(); u++){
+        if (u != i){
+            panels.push_back(panelObj);
+            panels[panels.size()-1] = panelsTemp[u];
+        }
+    }
+    
 }
 
 
@@ -2605,12 +2734,16 @@ void ofApp::brightnessPanel(int i){ // UI panel for user stored brightness value
                     rectShape.height = defCellSize;
                     ofDrawRectRounded(rectShape,r,10,10,10);
                     ofSetColor(255, 255, 255);
-                    panelType.drawString("Bright",x+ 5 + (c * defCellSize),y + 17 + (r*defCellSize));
+                    panelType.drawString("Bright",x+ 5 + (c * defCellSize),y + defCellGap + (r*defCellSize));
                     colorsIcon.draw(x+12 + (c * defCellSize),y+15 + (r*defCellSize),iconSize,iconSize);
                     ofNoFill();
                     ofSetLineWidth(2);
                     //ofDrawRectangle(x, y, defCellSize, defCellSize);
                     getCellByIden++;
+                    if (clickLeft(x, y, defCellSize, defCellSize) && mode == "delete"){
+                        delPanel(i);
+                        return;
+                    }
                 }
             }
         }
@@ -2697,7 +2830,11 @@ void ofApp::posPanel(int i){    // UI panel for user defined position values
                                 strInputObj.textValue = panels[i].savedPositions[getCellByIden].name;
                                 ptrType = 0;
                                 fieldPtr = &panels[i].savedPositions[getCellByIden].name;
-                    
+                            } else if (mode == "" && panels[i].savedPositions[getCellByIden].set){
+                                posChanged = true;
+                                mousePosition[0] = panels[i].savedPositions[getCellByIden].position[0];
+                                mousePosition[1] = panels[i].savedPositions[getCellByIden].position[1];
+                                
                             }
                         }
                     }
@@ -2714,12 +2851,16 @@ void ofApp::posPanel(int i){    // UI panel for user defined position values
                     rectShape.height = defCellSize;
                     ofDrawRectRounded(rectShape,r,10,10,defRounded*2);
                     ofSetColor(255, 255, 255);
-                    panelType.drawString("Positn",x+ 5 + (c * defCellSize),y + 17 + (r*defCellSize));
+                    panelType.drawString("Positn",x+ 5 + (c * defCellSize),y + defCellGap + (r*defCellSize));
                     colorsIcon.draw(x+12 + (c * defCellSize),y+15 + (r*defCellSize),iconSize,iconSize);
                     ofNoFill();
                     ofSetLineWidth(2);
                     //ofDrawRectangle(x, y, defCellSize, defCellSize);
                     getCellByIden++;
+                    if (clickLeft(x, y, defCellSize, defCellSize) && mode == "delete"){
+                        delPanel(i);
+                        return;
+                    }
                 }
             }
         }
@@ -2731,13 +2872,13 @@ void ofApp::drawGrid(){     // Subprogram that draws grid on screen (panel place
     ofSetLineWidth(1);
     ofSetColor(90, 90, 90);
     for (int i = 0; i <= floor((ofGetWindowWidth() - (defCellGap * 2))/ defCellSize); i++){
-        int x = defCellSize * i + defCellGap;
-        ofDrawLine(x, defCellGap, x, floor(((ofGetWindowHeight())/70)*defCellSize)+defCellGap);
+        int x = (defCellSize * i) + defCellGap;
+        ofDrawLine(x, defCellGap, x, ofGetWindowHeight()-(defCellGap*2));
     }
 
     for (int i = 0; i <= floor((ofGetWindowHeight() - (defCellGap * 2))/ defCellSize); i++){
-        int y = defCellSize * i + defCellGap;
-        ofDrawLine(defCellGap, y, floor(((ofGetWindowWidth())/70)*defCellSize)+defCellGap, y);
+        int y = (defCellSize * i) + defCellGap;
+        ofDrawLine(defCellGap, y, ofGetWindowWidth()-(defCellGap*2), y);
     }
 }
 
@@ -3137,18 +3278,36 @@ void ofApp::loadIconsFonts(){   // Load in fonts and scale them to the correct s
     // fonts
     
     vector<int> fontSize = {};  // scale fonts to their correct proportions
-    fontSize.push_back(defCellSize*0.2143); //0
-    fontSize.push_back(defCellSize*0.1429); //1
-    fontSize.push_back(defCellSize*0.2143); //2
-    fontSize.push_back(defCellSize*0.2143); //3
-    fontSize.push_back(defCellSize*0.3143); //4
-    fontSize.push_back(defCellSize*0.6429); //5
-    fontSize.push_back(defCellSize*0.4286); //6
-    fontSize.push_back(defCellSize*0.4286); //7
-    fontSize.push_back(defCellSize*0.1);    //8
-    fontSize.push_back(defCellSize*0.2857); //9
-    fontSize.push_back(defCellSize*0.2857); //10
-    fontSize.push_back(defCellSize*0.8); //11
+    
+    if (defCellSize > 50){
+        fontSize.push_back(defCellSize*0.2143); //0
+        fontSize.push_back(defCellSize*0.1429); //1
+        fontSize.push_back(defCellSize*0.2143); //2
+        fontSize.push_back(defCellSize*0.2143); //3
+        fontSize.push_back(defCellSize*0.3143); //4
+        fontSize.push_back(defCellSize*0.6429); //5
+        fontSize.push_back(defCellSize*0.4286); //6
+        fontSize.push_back(defCellSize*0.4286); //7
+        fontSize.push_back(defCellSize*0.1);    //8
+        fontSize.push_back(defCellSize*0.2857); //9
+        fontSize.push_back(defCellSize*0.2857); //10
+        fontSize.push_back(defCellSize*0.8); //11
+    } else {
+        // Horrible code practice here but added in temporarily so low res displays can at least render somewhat readable text
+        fontSize.push_back(defCellSize*0.2143); //0
+        fontSize.push_back(defCellSize*0.1429); //1
+        fontSize.push_back(defCellSize*0.2143); //2
+        fontSize.push_back(defCellSize*0.2143); //3
+        fontSize.push_back(defCellSize*0.3143); //4
+        fontSize.push_back(defCellSize*0.6429); //5
+        fontSize.push_back(defCellSize*0.4286); //6
+        fontSize.push_back(defCellSize*0.4286); //7
+        fontSize.push_back(2*(defCellSize*0.1));    //8
+        fontSize.push_back(defCellSize*0.2857); //9
+        fontSize.push_back(defCellSize*0.2857); //10
+        fontSize.push_back(defCellSize*0.8); //11
+    }
+
     
     debugText.load("Lato-Regular.ttf", fontSize[0]);    // tie each font type, name and file to the correct size as done above
     panelName.load("Lato-Regular.ttf", fontSize[1]);
@@ -3414,6 +3573,11 @@ void ofApp::draw(){ // Code repeatedly looped until program close
         drawSplash(1000, 1000);
     }
     
+    if (ofGetElapsedTimeMillis() > lastDMXOutput + waitBetweenDMX){
+        cout << "\n\n\n\n\n\n\n\n\n" << endl;
+        cout << genDMX(1) << endl;
+        lastDMXOutput = ofGetElapsedTimeMillis();
+    }
     
 }
 
@@ -3450,6 +3614,8 @@ void ofApp::keyPressed(int key){    // Check what key the user is pressing on th
     if (key > 31 && key < 126 && strInputObj.textValue.length() < maxCharacterCount){
         if (strInputObj.screenType == 0){   // Allow char's that are not ints
             char myChar = key;
+            
+            
             if (myChar != '!' && myChar != '@' && myChar != '#' && myChar != '$' && myChar != '%' && myChar != '^' && myChar != '&' && myChar != '*' && myChar != '(' && myChar != ')' && myChar != '/' && myChar != '|' && myChar != '`'){
                 strInputObj.textValue = strInputObj.textValue + myChar;
             }

@@ -88,6 +88,9 @@ public:
 class ofApp : public ofBaseApp{ // Global values within LucentOP application
 
     public:
+    
+    bool enableDMXoutput = true;
+    
         void setup(); // Code executed once on initial launch of ofApp
         void update();
         void draw(); // Code repeatedly looped until program close
@@ -155,6 +158,7 @@ class ofApp : public ofBaseApp{ // Global values within LucentOP application
     int green = 255;
     int blue = 255;
     bool colorsChanged = false; // Has the User interacted with any Color values?
+    bool posChanged = false;
     vector<int> mouseColors = {255,255,255,255,255,255}; // Color data the mouse is carrying. Red, Green, Blue, White, Amber, UV
     vector<int> mousePosition = {72,72};  // fixture pan tilt values.
     vector<int> mouseFixtures = {};  // array stores index array of fixtures from showFixtures
@@ -180,7 +184,8 @@ class ofApp : public ofBaseApp{ // Global values within LucentOP application
     int flashOn = false;    // Is flash currently being rendered?
     
     
-    
+    int lastDMXOutput = 0;
+    int waitBetweenDMX = 4;
     int lastInteraction;    // Store a copy of the Elapsed Millis the application has been running when the user has last interacted with a UI element
     int defWaitTime = 100; // time to wait after user finishes an action before calling the code inside a mouse related function (time in millis) - prevents function being called again too soon
     bool waitTime(int time);   // Has the time passed for the funciton to be called again?? (uses lastInteraction and wait time specified - usually defWaitTime)
@@ -225,6 +230,11 @@ class ofApp : public ofBaseApp{ // Global values within LucentOP application
     void fixtures(int i); // UI panel that lists all DMX fixtures within the showfile
     void controlPanel(int i); // function responsible for drawing the control panel
     void simulateFixPanel(int i); // Simulated fixtures panel
+    
+    void delPanel(int i);   // Function used to delete UI panels
+    
+    string genDMX(int u); // Generate the DMX values for the specified universe
+    void outputDMX(); // Output the existing DMX values
     
     //void scrollBar(int x, int y, );
     
