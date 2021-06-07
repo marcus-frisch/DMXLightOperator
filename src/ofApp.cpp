@@ -110,19 +110,22 @@ string ofApp::genDMX(int u){  // Generate the DMX values for the specified unive
     for (int i = 1; i < 512; i++){  // Set all DMX channels to 0
         dmxData.push_back(0);
     }
-    vector<int> uniFixtures = {};   // Store the index of all showFixture fixtures that are on the specified DMX universe
-    for (int i = 0; i < showFixtures.size(); i++){
-        if (showFixtures[i].universe == u){
-            uniFixtures.push_back(i);
+    
+    if (!blackOut){
+        vector<int> uniFixtures = {};   // Store the index of all showFixture fixtures that are on the specified DMX universe
+        for (int i = 0; i < showFixtures.size(); i++){
+            if (showFixtures[i].universe == u){
+                uniFixtures.push_back(i);
+            }
+        }
+        
+        for (int i = 0; i < uniFixtures.size(); i++){   // Get the value of the DMX channels of each fixture and set those values in the DMX data with their correct position based off each fixtures starting channel DMX address
+            for (int c = 0; c < showFixtures[uniFixtures[i]].channels.size(); c++){
+                dmxData[showFixtures[uniFixtures[i]].startChannel+c] = showFixtures[uniFixtures[i]].channels[c].value;
+            }
         }
     }
-    
-    for (int i = 0; i < uniFixtures.size(); i++){   // Get the value of the DMX channels of each fixture and set those values in the DMX data with their correct position based off each fixtures starting channel DMX address
-        for (int c = 0; c < showFixtures[uniFixtures[i]].channels.size(); c++){
-            dmxData[showFixtures[uniFixtures[i]].startChannel+c] = showFixtures[uniFixtures[i]].channels[c].value;
-        }
-    }
-    
+
     string dmxString = "";
     for (int i = 1 ; i < 512; i++){
         if (i != 511){
@@ -151,6 +154,12 @@ void ofApp::updateSelectedFixtures(){   // Update User selected showfixtures DMX
                 showFixtures[mouseFixtures[i]].channels[u].value = mousePosition[0];
             } else if (showFixtures[mouseFixtures[i]].channels[u].purpose == "tilt" && posChanged){
                 showFixtures[mouseFixtures[i]].channels[u].value = mousePosition[1];
+            } else if (showFixtures[mouseFixtures[i]].channels[u].purpose == "white" && wauvChanged){
+                showFixtures[mouseFixtures[i]].channels[u].value = mouseColors[3];
+            } else if (showFixtures[mouseFixtures[i]].channels[u].purpose == "amber" && wauvChanged){
+                showFixtures[mouseFixtures[i]].channels[u].value = mouseColors[4];
+            } else if (showFixtures[mouseFixtures[i]].channels[u].purpose == "uv" && wauvChanged){
+                showFixtures[mouseFixtures[i]].channels[u].value = mouseColors[5];
             }
             
         }
@@ -232,10 +241,12 @@ void ofApp::simulateFixPanel(int i){    // Simulated fixtures panel
             
             
         }
-        if (foundDimmer){   // As mentioned in previous comment if the fixture contains data that can be shown visually, render it for the user to see
-            ofSetColor(dimmerValue);
-            ofDrawRectangle(panels[i].panelSimFixtures[n].x, panels[i].panelSimFixtures[n].y, panels[i].panelSimFixtures[n].wi, panels[i].panelSimFixtures[n].hi);
-        }
+//        if (foundDimmer){   // As mentioned in previous comment if the fixture contains data that can be shown visually, render it for the user to see
+//            ofSetColor(255,255,255,255);
+//            ofFill();
+//            ofSetColor(255);
+//            ofDrawRectangle(panels[i].panelSimFixtures[n].x, panels[i].panelSimFixtures[n].y, panels[i].panelSimFixtures[n].wi, panels[i].panelSimFixtures[n].hi);
+//        }
         
         if (foundColors == 3){
             ofSetColor(fixtureColor[0],fixtureColor[1],fixtureColor[2]);
@@ -258,8 +269,25 @@ void ofApp::simulateFixPanel(int i){    // Simulated fixtures panel
         ofSetColor(255,255,255,255);
         ofDrawRectangle(panels[i].panelSimFixtures[n].x, panels[i].panelSimFixtures[n].y, panels[i].panelSimFixtures[n].wi, panels[i].panelSimFixtures[n].hi);
         
-        // mouseX > x +cellSize && mouseX < x+wi-cellSize && mouseY > y + cellSize && mouseY < y+hi-cellSize
+        bool isSelected = false;
+        for (int j = 0; j < mouseFixtures.size(); j++){
+            if (mouseFixtures[j] == fixtureIndex){
+                isSelected = true;
+            }
+        }
         
+        if (isSelected){   // As mentioned in previous comment if the fixture contains data that can be shown visually, render it for the user to see
+            ofNoFill();
+            ofSetLineWidth(2);
+            ofSetColor(0);
+            ofDrawRectangle(panels[i].panelSimFixtures[n].x+2, panels[i].panelSimFixtures[n].y+2, panels[i].panelSimFixtures[n].wi-4, panels[i].panelSimFixtures[n].hi-4);
+            ofSetColor(0,255,0);
+            ofDrawRectangle(panels[i].panelSimFixtures[n].x, panels[i].panelSimFixtures[n].y, panels[i].panelSimFixtures[n].wi, panels[i].panelSimFixtures[n].hi);
+        }
+        
+        
+        // mouseX > x +cellSize && mouseX < x+wi-cellSize && mouseY > y + cellSize && mouseY < y+hi-cellSize
+        if (overlay < 1){
         if (mouseX > panels[i].panelSimFixtures[n].x && mouseX < panels[i].panelSimFixtures[n].x + panels[i].panelSimFixtures[n].wi && mouseY > panels[i].panelSimFixtures[n].y && mouseY < panels[i].panelSimFixtures[n].y + panels[i].panelSimFixtures[n].hi){    // Check if mouse is over fixture
             overFixture = true;
             if (mouseExe == 1){
@@ -273,8 +301,25 @@ void ofApp::simulateFixPanel(int i){    // Simulated fixtures panel
                     mouseFixtures.push_back(fixtureIndex);
                 }
                 
+                if (mode == "off"){
+                    mode = "";
+                    for (int j = 0; j < showFixtures[fixtureIndex].channels.size(); j++){
+                        showFixtures[fixtureIndex].channels[j].value = 0;
+                    }
+                    
+                    vector<int> tempMouseFix = mouseFixtures;
+                    mouseFixtures = {};
+                    for (int j = 0; j < tempMouseFix.size(); j++){
+                        if (tempMouseFix[j] != fixtureIndex){
+                            mouseFixtures.push_back(tempMouseFix[j]);
+                        }
+                    }
+                    
+                }
+                
             }
         }
+    }
         
     
 
@@ -659,10 +704,10 @@ void ofApp::demoShow(){ // Update all showFile values to hard-coded pre-defined 
     panels.push_back(panelObj);
     panels[panels.size()-1].type = "fixtures";
     panels[panels.size()-1].name = "Fixtures";
-    panels[panels.size()-1].x = 8;
-    panels[panels.size()-1].y = 0;
+    panels[panels.size()-1].x = 19;
+    panels[panels.size()-1].y = 4;
     panels[panels.size()-1].wi = 4;
-    panels[panels.size()-1].hi = 3;
+    panels[panels.size()-1].hi = 7;
     panels[panels.size()-1].cellSize = defCellSize;
     
     panels.push_back(panelObj);
@@ -670,15 +715,24 @@ void ofApp::demoShow(){ // Update all showFile values to hard-coded pre-defined 
     panels[panels.size()-1].name = "Fixture Simulation";
     panels[panels.size()-1].x = 0;
     panels[panels.size()-1].y = 0;
-    panels[panels.size()-1].wi = 8;
+    panels[panels.size()-1].wi = 17;
     panels[panels.size()-1].hi = 3;
     panels[panels.size()-1].cellSize = defCellSize*0.75;
     
     panels.push_back(panelObj);
     panels[panels.size()-1].type = "controlpanel";
     panels[panels.size()-1].name = "Control Panel";
-    panels[panels.size()-1].x = 12;
+    panels[panels.size()-1].x = 20;
     panels[panels.size()-1].y = 0;
+    panels[panels.size()-1].wi = 5;
+    panels[panels.size()-1].hi = 3;
+    panels[panels.size()-1].cellSize = 40;
+    
+    panels.push_back(panelObj);
+    panels[panels.size()-1].type = "controlpanel";
+    panels[panels.size()-1].name = "Control Panel";
+    panels[panels.size()-1].x = 8;
+    panels[panels.size()-1].y = 11;
     panels[panels.size()-1].wi = 5;
     panels[panels.size()-1].hi = 3;
     panels[panels.size()-1].cellSize = 40;
@@ -1410,20 +1464,17 @@ void ofApp::showFileConfig(){   // Showfile screen (load, save, delete and confi
             if (clickLeft(showCardWidth - defCellSize - defCellGap - ((u*defCellSize)+defCellGap*u), showCardstartheight+(i*showCardHeight)+(defCellGap)+(i*defCellGap)+(showCardHeight-defCellSize-defCellGap), defCellSize, defCellSize)){    // Update variables for loading of show demonstration (clear current showfile values)
                 setLi();
                 mode = "";
+                panels = {};
                 brightnessChanged = false;
                 colorsChanged = false;
+                wauvChanged = false;
+                posChanged = false;
                 red = 255;
                 green = 255;
                 blue = 255;
-                mouseColors = {255,255,255,255,255,255}; // Color data the mouse is carrying. Red, Green, Blue, White, Amber, UV
-                mousePosition = {72,72};  // pan tilt values.
-                mouseFixtures = {};  // array stores index array of fixtures from showFixtures
-                mouseBrightness = 127;
-                panels = {};
-                dmxPatch = {};
-                fixturesDef = {};
-                showFixtures = {};
+                clearValues();
                 demoShow();
+                
                 screen = 0;
                 
             }
@@ -2031,6 +2082,18 @@ void ofApp::addPanelOverlay(){  // Overlay allowing user to select which panel t
 
 }
 
+void ofApp::clearValues(){
+    brightnessChanged = false;
+    colorsChanged = false;
+    wauvChanged = false;
+    posChanged = false;
+    mouseFixtures = {};  // array stores index array of fixtures from showFixtures
+    mouseColors = {0,0,0,0,0,0};
+    mousePosition = {0,0};
+    mouseFixtures = {};
+    mouseBrightness = 0;
+}
+
 void ofApp::controlPanel(int i){    // function responsible for drawing the control panel
     int x = gX(panels[i].x);
     int y = gY(panels[i].y);
@@ -2144,21 +2207,17 @@ void ofApp::controlPanel(int i){    // function responsible for drawing the cont
                                 
                             } else if (cpActions[indexAction] == "blackout"){
                                 mode = "";
-                                cout << "DMX" << endl;
-                                //ofSystem("export PATH=$PATH:~/opt/bin; ola_dev_info");
-                                if (enableDMXoutput){
-                                    ofSystem("/opt/local/bin/ola_dev_info");
+                                cout << "B clicked" << endl;
+                                
+                                if (blackOut){
+                                    blackOut = false;
+                                } else {
+                                    blackOut = true;
                                 }
-                                
-                                
                                 
                             } else if (cpActions[indexAction] == "clear") {
                                 mode = "";
-                                brightnessChanged = false;
-                                colorsChanged = false;
-                                posChanged = false;
-                                mouseFixtures = {};  // array stores index array of fixtures from showFixtures
-    
+                                clearValues();
                             }
                         }
                     }
@@ -2393,6 +2452,8 @@ void ofApp::wauv(int i){       // White Amber UV fader mixer UI panel
                     ofFill();
                     if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace + (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY >  y + (wi/3) + ((wi/3)/2) && mouseY < y + (wi/3) + ((wi/3)/2) + hi-(wi/3)*2 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){   // check if mouse is in position and map values.
                         mouseColors[3+f] = ofMap(mouseY, y + (wi/3) + ((wi/3)/2) + hi-(wi/3)*2-1, y + (wi/3) + ((wi/3)/2)+1, 0, 255);
+                        wauvChanged = true;
+                        
                     }
                     ofDrawRectRounded(x + defSpace + 3 + ((wi/3) * f), y + (wi/3) + ((wi/3)/2) + hi-(wi/3)*2 -3, (wi/3) - (defSpace * 2)-6,ofMap(mouseColors[3+f], 0, 255, 0, ((hi-(wi/3)*2)-6)*-1),r);  //  draw mapped value
                     ofSetColor(255, 255, 255);
@@ -2401,6 +2462,7 @@ void ofApp::wauv(int i){       // White Amber UV fader mixer UI panel
                     fixText.drawString("MAX", x + defSpace + ((wi/3)/2)-20 + ((wi/3) * f), y + (wi/3)+ 20);
                     if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace +  (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY > y + (wi/3) && mouseY < y + (wi/3) + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){
                         mouseColors[3+f] = 255;
+                        wauvChanged = true;
                     }
                     ofSetColor(255, 255, 255);
                     ofDrawRectRounded(x + defSpace + ((wi/3) * f), y + hi - (defCellSize/2) + 4, (wi/3) - (defSpace * 2), (defCellSize/2)-10,r);  // MIN
@@ -2408,6 +2470,7 @@ void ofApp::wauv(int i){       // White Amber UV fader mixer UI panel
                     fixText.drawString("MIN", x + defSpace + ((wi/3)/2)-20 + ((wi/3) * f),  y + hi - (defCellSize/2) + 20);
                     if (mouseX > x + defSpace + ((wi/3) * f) && mouseX < x + defSpace +  (wi/3) - (defSpace * 2) + ((wi/3) * f) && mouseY > y + hi - (defCellSize/2) + 4 && mouseY <  y + hi - (defCellSize/2) + 4 + (defCellSize/2)-10 && mouseExe == 1 && level < 2 && overlay == 0 && waitTime(defWaitTime)){
                         mouseColors[3+f] = 0;
+                        wauvChanged = true;
                     }
 
                     ofSetColor(255, 255, 255);
@@ -2565,6 +2628,9 @@ void ofApp::colorsPanel(int i){     // UI panel for user storing / defining colo
                                 mouseColors[0] = panels[i].savedColors[getCellByIden].r;
                                 mouseColors[1] = panels[i].savedColors[getCellByIden].g;
                                 mouseColors[2] = panels[i].savedColors[getCellByIden].b;
+                                mouseColors[3] = panels[i].savedColors[getCellByIden].w;
+                                mouseColors[4] = panels[i].savedColors[getCellByIden].a;
+                                mouseColors[5] = panels[i].savedColors[getCellByIden].uv;
                                 colorsChanged = true;
                             }
                             
@@ -2594,9 +2660,13 @@ void ofApp::colorsPanel(int i){     // UI panel for user storing / defining colo
                     
                             }  else if (mode == ""){   // Update mouse colors
                                 if (panels[i].savedColors[getCellByIden].set){
+                                    colorsChanged = true;
                                     mouseColors[0] = panels[i].savedColors[getCellByIden].r;
                                     mouseColors[1] = panels[i].savedColors[getCellByIden].g;
                                     mouseColors[2] = panels[i].savedColors[getCellByIden].b;
+                                    mouseColors[3] = panels[i].savedColors[getCellByIden].w;
+                                    mouseColors[4] = panels[i].savedColors[getCellByIden].a;
+                                    mouseColors[5] = panels[i].savedColors[getCellByIden].uv;
                                 }
                             }
                         
@@ -2718,6 +2788,11 @@ void ofApp::brightnessPanel(int i){ // UI panel for user stored brightness value
                                 mode = "";
                                 panels[i].savedBrightness[getCellByIden].value = 255;
                                 panels[i].savedBrightness[getCellByIden].set = false;
+                            } else if (mode == ""){
+                                if (panels[i].savedBrightness[getCellByIden].set){
+                                    brightnessChanged = true;
+                                    mouseBrightness = panels[i].savedBrightness[getCellByIden].value;
+                                }
                             }
                         }
                     }
@@ -3574,9 +3649,15 @@ void ofApp::draw(){ // Code repeatedly looped until program close
     }
     
     if (ofGetElapsedTimeMillis() > lastDMXOutput + waitBetweenDMX){
-        cout << "\n\n\n\n\n\n\n\n\n" << endl;
-        cout << genDMX(1) << endl;
+//        cout << "\n\n\n\n\n\n\n\n\n" << endl;
+//        cout << genDMX(1) << endl;
         lastDMXOutput = ofGetElapsedTimeMillis();
+        
+//        cout << "DMX" << endl;
+        //ofSystem("export PATH=$PATH:~/opt/bin; ola_dev_info");
+        if (enableDMXoutput){
+            ofSystem("/opt/local/bin/ola_streaming_client  -u 1 -d " + genDMX(1));
+        }
     }
     
 }
@@ -3594,6 +3675,7 @@ void ofApp::updateScaling(){    // Update all variables responcible for applicat
     defRounded = defCellSize*0.0714;
     defMiniButton = defCellSize/2;
     showFixturestartheight = (defCellGap*2)+(3*defCellSize);
+    showCardstartheight = 3*defCellSize+defCellGap;
     iconSize = defCellSize*0.5; //size to draw icons
     
     loadIconsFonts();

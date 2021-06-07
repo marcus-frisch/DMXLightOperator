@@ -158,12 +158,13 @@ class ofApp : public ofBaseApp{ // Global values within LucentOP application
     int green = 255;
     int blue = 255;
     bool colorsChanged = false; // Has the User interacted with any Color values?
+    bool wauvChanged = false;
     bool posChanged = false;
-    vector<int> mouseColors = {255,255,255,255,255,255}; // Color data the mouse is carrying. Red, Green, Blue, White, Amber, UV
-    vector<int> mousePosition = {72,72};  // fixture pan tilt values.
+    vector<int> mouseColors = {0,0,0,0,0,0}; // Color data the mouse is carrying. Red, Green, Blue, White, Amber, UV
+    vector<int> mousePosition = {0,0};  // fixture pan tilt values.
     vector<int> mouseFixtures = {};  // array stores index array of fixtures from showFixtures
     bool brightnessChanged = false; // Has the User interacted with any Brightness values?
-    int mouseBrightness = 127;  // Brightness the mouse (user) has selected
+    int mouseBrightness = 0;  // Brightness the mouse (user) has selected
     int level = 0;  // 0 grid, 1 panel, 2 control panel, 3 fieldInput (used to prevent overlapping UI elements both being functional at once)
     bool overFixture = false;   // Is the mouse currently over a simulated fixture?
     
@@ -183,9 +184,11 @@ class ofApp : public ofBaseApp{ // Global values within LucentOP application
     int defFlashTime = 500; // Time used to wait between flashes for UI elements e.g Flashing of a text cursor.
     int flashOn = false;    // Is flash currently being rendered?
     
+    void clearValues();
     
     int lastDMXOutput = 0;
-    int waitBetweenDMX = 4;
+    int waitBetweenDMX = 2;
+    bool blackOut = false;
     int lastInteraction;    // Store a copy of the Elapsed Millis the application has been running when the user has last interacted with a UI element
     int defWaitTime = 100; // time to wait after user finishes an action before calling the code inside a mouse related function (time in millis) - prevents function being called again too soon
     bool waitTime(int time);   // Has the time passed for the funciton to be called again?? (uses lastInteraction and wait time specified - usually defWaitTime)
@@ -302,6 +305,8 @@ public:
     int g;  //green
     int b;  //blue
     int w;  //white
+    int a;  //amber
+    int uv; //uv
     
 };
 

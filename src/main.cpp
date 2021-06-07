@@ -20,7 +20,9 @@ int main( ){
  */
 
 /*
- KNOWN PROBLEMS:
+ KNOWN PROBLEMS (BUGS):
+ 
+ * Funky mouse behaviour when a fixture simulation panel is drawn - seems mouse clicks are not registered when the mouse is within ~2 cell sizes proximity of panel
  
  * Occasionally runs into a "OUT OF MEMORY" error causing program to crash.
    System restart has proven to be a fix for the meanwhile. - No known set of steps can be repeated to re-produce the error.
