@@ -89,7 +89,7 @@ class ofApp : public ofBaseApp{ // Global values within LucentOP application
 
     public:
     
-    bool enableDMXoutput = true;
+    bool enableDMXoutput = false;
     
         void setup(); // Code executed once on initial launch of ofApp
         void update();
@@ -268,7 +268,7 @@ class ofApp : public ofBaseApp{ // Global values within LucentOP application
     
     void updateScaling(); // Update all variables responcible for application UI proportion scaling
     
-    int defCellSize = 140;  // Value that is responsible for the whole UI proportion scaling within the LucentOP application. Represents one cell's square dimensions on the grid. Should be big enough to accomoodate a single finger on a touchscreen 70 or 140 (retina)
+    int defCellSize = 70;  // Value that is responsible for the whole UI proportion scaling within the LucentOP application. Represents one cell's square dimensions on the grid. Should be big enough to accomoodate a single finger on a touchscreen 70 or 140 (retina)
     int defCellGap = defCellSize*0.2142;    // Gap generally used to space out two or more very close UI elements next to each other
     int defRounded = defCellSize*0.0714;    // Radius for rounded corners of rounded UI elements
     int defMiniButton = defCellSize/2;      // Value represented for smaller UI actions (not commonly used throughout application use - such as adding or removing channels from a fixture definition)

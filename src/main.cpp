@@ -29,6 +29,12 @@ int main( ){
  
  * Search for comment "FS01" - causing errors in console yet functions as I want (Not important but worth figuring out)
  
+ * drawing a panel backwards (moving mouse leftward or up or both - after initial panel XY origin has been set)
+ 
+ * drawing a panel through another defined panel
+ 
+ * Occasionally attempting to draw new panels near a control center doesn't work. (no known steps to reproduce error. Noted is occurs in internal demo) - thought to relate to scaling functionality
+ 
  
  */
 
@@ -73,16 +79,6 @@ Possible bugs:
  
 */
 
-
-/*
- Bugs:
- 
- * drawing a panel backwards (moving mouse leftward or up or both - after initial panel XY origin has been set)
- 
- * drawing a panel through another defined panel
- 
- 
- */
 
 /*
  CREDITS

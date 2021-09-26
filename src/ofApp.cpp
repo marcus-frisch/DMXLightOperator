@@ -3569,8 +3569,8 @@ void ofApp::drawSplash(int wait, int fade){ // Draw splash screen with wait time
 
 void ofApp::draw(){ // Code repeatedly looped until program close
     
-    level = 0;
-    overPanel = false;
+    level = 0;  // Set mouse level to 0 when just on grid
+    overPanel = false;  // set mouse to not hovering over a panel when just on grid
     
     if (showGrid == true){
         drawGrid();
@@ -3580,9 +3580,7 @@ void ofApp::draw(){ // Code repeatedly looped until program close
     if (screen == 0){
         strInputHeading = "Rename";
         
-    
         updateSelectedFixtures();
-        
         
     if (panels.size() > 0){
         for (int i = 0; i < panels.size(); i++){
@@ -3590,9 +3588,6 @@ void ofApp::draw(){ // Code repeatedly looped until program close
         }
     }
 
-
-
-    
     ofSetColor(255, 255, 255);
     
     if (strInputObj.fieldInputState == 1){
@@ -3689,6 +3684,8 @@ void ofApp::updateScaling(){    // Update all variables responcible for applicat
 void ofApp::keyPressed(int key){    // Check what key the user is pressing on their ASCII keyboard
     
     char userKey = key;
+    
+    
     if (strInputObj.fieldInputState == 0 && key == '~'){
         updateScaling();
     }
@@ -3767,7 +3764,6 @@ void ofApp::mouseReleased(int x, int y, int button){    // Called when a mouse b
     // mouseExe determines if there has been a click. This value changes
     //back to 0 (don't do anything) so it doesn't continually call a function
     //or IF statement to complete an action. (1 Left, 2 Middle, 3 Right)
-    
     
     if (button == 0){
         mouseExe = 1;
