@@ -17,6 +17,8 @@ int main( ){
  * The comments below are thoughts and warnings from the developer during various times of development. These comments serve as a "current build" notice
  for future development.
  
+ * To compile a copy for yourself - install and follow the steps to setup a 'OpenFrameworks' project. Replace the generated 'src' files with these and drag the 'data' folder into the 'bin' folder. Then compile the project.
+ 
  */
 
 /*
